@@ -5,7 +5,7 @@ from functools import lru_cache
 class Settings(BaseSettings):
     github_app_id: str
     github_app_slug: str
-    github_private_key_path: str = "private-key.pem"
+    github_private_key: str
     github_webhook_secret: str
 
     gemini_api_key: str
