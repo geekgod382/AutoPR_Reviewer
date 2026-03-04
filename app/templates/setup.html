@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Setup — AutoPR Reviewer{% endblock %}
+
+{% block extra_css %}
+    .setup-header { text-align: center; padding: 2rem 0 1.5rem; }
+    .setup-header h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+    .setup-header p { color: #8b949e; }
+
+    .plan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 2rem 0; }
+    @media (max-width: 600px) { .plan-grid { grid-template-columns: 1fr; } }
+
+    .plan-option { text-align: center; padding: 2rem 1.5rem; }
+    .plan-option h2 { margin-bottom: 0.4rem; }
+    .plan-option .price { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .plan-option .price-sub { font-size: 0.85rem; color: #8b949e; margin-bottom: 1.25rem; }
+    .plan-option ul { list-style: none; text-align: left; margin-bottom: 1.5rem; }
+    .plan-option ul li { padding: 0.3rem 0; font-size: 0.9rem; color: #8b949e; }
+    .plan-option ul li::before { content: "✓ "; color: #3fb950; }
+    .plan-option .btn { width: 100%; text-align: center; }
+{% endblock %}
+
+{% block content %}
+<div class="setup-header">
+    <h1>Welcome, {{ owner }}! 🎉</h1>
+    <p>Your GitHub App has been installed. Choose your plan to get started.</p>
+</div>
+
+<div class="plan-grid">
+    <div class="card plan-option">
+        <h2>Basic</h2>
+        <div class="price">Free</div>
+        <div class="price-sub">No credit card required</div>
+        <ul>
+            <li>AI-powered code review</li>
+            <li>Static analysis (flake8)</li>
+            <li>Bug &amp; style detection</li>
+            <li>Risk scoring</li>
+        </ul>
+        <a href="{{ dashboard_url }}" class="btn btn-secondary">Continue with Basic</a>
+    </div>
+
+    <div class="card plan-option">
+        <h2>Pro 💎</h2>
+        <div class="price">$10<span style="font-size: 0.9rem; font-weight: 400;">/mo</span></div>
+        <div class="price-sub">Cancel anytime</div>
+        <ul>
+            <li>Everything in Basic</li>
+            <li>PR complexity scoring</li>
+            <li>Security pattern detection</li>
+            <li>Large function detection</li>
+            <li>Nested loop detection</li>
+            <li>Missing error handling</li>
+        </ul>
+        {% if pro_checkout_url %}
+        <a href="{{ pro_checkout_url }}" class="btn btn-pro">Upgrade to Pro</a>
+        {% else %}
+        <span class="btn btn-secondary" style="opacity: 0.5; cursor: not-allowed;">Pro — coming soon</span>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

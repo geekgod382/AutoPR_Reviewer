@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}AutoPR Reviewer — AI-Powered PR Reviews{% endblock %}
+
+{% block extra_css %}
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.4rem; margin-bottom: 0.75rem; }
+    .hero p { font-size: 1.15rem; color: #8b949e; max-width: 540px; margin: 0 auto 2rem; }
+
+    .features { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 2rem 0; }
+    @media (max-width: 600px) { .features { grid-template-columns: 1fr; } }
+
+    .feature-card h3 { margin-bottom: 0.5rem; font-size: 1rem; }
+    .feature-card p { color: #8b949e; font-size: 0.9rem; }
+
+    .plans { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 2rem 0; }
+    @media (max-width: 600px) { .plans { grid-template-columns: 1fr; } }
+
+    .plan-card { text-align: center; }
+    .plan-card h3 { margin-bottom: 0.4rem; }
+    .plan-card .price { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.75rem; }
+    .plan-card ul { list-style: none; text-align: left; margin-bottom: 1rem; }
+    .plan-card ul li { padding: 0.3rem 0; font-size: 0.9rem; color: #8b949e; }
+    .plan-card ul li::before { content: "✓ "; color: #3fb950; }
+{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1>🤖 AutoPR Reviewer</h1>
+    <p>AI-powered code reviews for every pull request. Catch bugs, style issues, and security problems automatically.</p>
+    <a href="{{ install_url }}" class="btn btn-primary">Install on GitHub</a>
+</div>
+
+<div class="features">
+    <div class="card feature-card">
+        <h3>🐛 Bug Detection</h3>
+        <p>AI-powered analysis finds potential bugs before they reach production.</p>
+    </div>
+    <div class="card feature-card">
+        <h3>🔍 Static Analysis</h3>
+        <p>Automated flake8 checks on every Python file in the diff.</p>
+    </div>
+    <div class="card feature-card">
+        <h3>⚡ Performance Tips</h3>
+        <p>Get suggestions for improving code performance and efficiency.</p>
+    </div>
+    <div class="card feature-card">
+        <h3>🛡️ Security Scanning</h3>
+        <p>Detects hardcoded secrets, SQL injection patterns, and dangerous calls.</p>
+    </div>
+</div>
+
+<div class="plans">
+    <div class="card plan-card">
+        <h3>Basic</h3>
+        <div class="price">Free</div>
+        <ul>
+            <li>AI-powered code review</li>
+            <li>Static analysis (flake8)</li>
+            <li>Bug &amp; style detection</li>
+            <li>Risk scoring</li>
+        </ul>
+    </div>
+    <div class="card plan-card">
+        <h3>Pro</h3>
+        <div class="price">$10/mo</div>
+        <ul>
+            <li>Everything in Basic</li>
+            <li>PR complexity scoring</li>
+            <li>Security pattern detection</li>
+            <li>Large function detection</li>
+            <li>Nested loop detection</li>
+            <li>Missing error handling</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

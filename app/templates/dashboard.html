@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — AutoPR Reviewer{% endblock %}
+
+{% block extra_css %}
+    .dash-header { padding: 2rem 0 1.5rem; }
+    .dash-header h1 { font-size: 1.8rem; margin-bottom: 0.25rem; }
+    .dash-header p { color: #8b949e; }
+
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+    @media (max-width: 600px) { .stat-grid { grid-template-columns: 1fr; } }
+
+    .stat-card { text-align: center; }
+    .stat-card .stat-value { font-size: 2rem; font-weight: 700; }
+    .stat-card .stat-label { font-size: 0.85rem; color: #8b949e; margin-top: 0.25rem; }
+
+    .info-row { display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px solid #30363d; }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: #8b949e; }
+
+    .actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.5rem; }
+{% endblock %}
+
+{% block content %}
+<div class="dash-header">
+    <h1>Dashboard</h1>
+    <p>Manage your AutoPR Reviewer installation.</p>
+</div>
+
+<div class="stat-grid">
+    <div class="card stat-card">
+        <div class="stat-value">{{ review_count }}</div>
+        <div class="stat-label">PRs Reviewed</div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-value">
+            <span class="badge {% if installation.plan == 'pro' %}badge-pro{% else %}badge-basic{% endif %}">
+                {{ installation.plan }}
+            </span>
+        </div>
+        <div class="stat-label">Current Plan</div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-value">{{ installation.owner }}</div>
+        <div class="stat-label">GitHub Account</div>
+    </div>
+</div>
+
+<div class="card">
+    <h3 style="margin-bottom: 1rem;">Installation Details</h3>
+    <div class="info-row">
+        <span class="info-label">Installation ID</span>
+        <span>{{ installation.github_installation_id }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Owner</span>
+        <span>{{ installation.owner }}</span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Plan</span>
+        <span>
+            <span class="badge {% if installation.plan == 'pro' %}badge-pro{% else %}badge-basic{% endif %}">
+                {{ installation.plan }}
+            </span>
+        </span>
+    </div>
+    <div class="info-row">
+        <span class="info-label">Installed</span>
+        <span>{{ installation.created_at.strftime('%B %d, %Y') if installation.created_at else 'N/A' }}</span>
+    </div>
+</div>
+
+<div class="actions">
+    <a href="{{ manage_url }}" class="btn btn-secondary" target="_blank" rel="noopener">Manage Installation on GitHub</a>
+    {% if upgrade_url %}
+    <a href="{{ upgrade_url }}" class="btn btn-pro">Upgrade to Pro 💎</a>
+    {% endif %}
+</div>
+{% endblock %}
