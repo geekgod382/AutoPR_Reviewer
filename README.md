@@ -20,19 +20,7 @@ AI-powered GitHub App that automatically reviews Pull Requests — detects bugs,
 
 ## Quick Start
 
-### 1. Create a GitHub App
-
-1. Go to **Settings → Developer settings → GitHub Apps → New GitHub App**.
-2. Set the **Webhook URL** to your server's public URL + `/webhook` (e.g. `https://your-domain.com/webhook`).
-3. Generate and save a **webhook secret**.
-4. Under **Permissions**, grant:
-   - **Pull requests**: Read & Write
-   - **Contents**: Read-only
-5. Subscribe to the **Pull request** event.
-6. Generate a **private key** and download the `.pem` file.
-7. Note your **App ID** from the app settings page.
-
-### 2. Configure Environment
+### 1. Configure Environment
 
 Copy the example env file and fill in your values:
 
@@ -50,7 +38,7 @@ cp .env.example .env
 | `DODO_WEBHOOK_SECRET` | *(optional)* Dodo webhook signature secret |
 | `DATABASE_URL` | SQLite URL (default: `sqlite:///./autopr.db`) |
 
-### 3. Run Locally
+### 2. Run Locally
 
 ```bash
 # Install dependencies
@@ -68,7 +56,7 @@ ngrok http 8000
 
 Then update your GitHub App's webhook URL to the ngrok URL + `/webhook`.
 
-### 4. Run with Docker
+### 3. Run with Docker
 
 ```bash
 # Build and start
