@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     github_webhook_secret: str
 
     gemini_api_key: str
-    groq_api_key: str = ""
+    groq_api_key: str
 
     dodo_payments_api_key: str = ""
     dodo_webhook_secret: str = ""

@@ -73,9 +73,6 @@ async def _try_gemini(prompt: str) -> dict | None:
 
 async def _try_groq(prompt: str) -> dict | None:
     settings = get_settings()
-    if not settings.groq_api_key:
-        logger.warning("Groq API key not configured, skipping fallback")
-        return None
 
     try:
         async with httpx.AsyncClient() as client:
@@ -86,27 +83,31 @@ async def _try_groq(prompt: str) -> dict | None:
                     "Content-Type": "application/json",
                 },
                 json={
-                    "model": "compound-beta",
+                    "model": "llama-3.3-70b-versatile",
                     "messages": [
                         {"role": "system", "content": SYSTEM_PROMPT},
                         {"role": "user", "content": prompt},
                     ],
                     "temperature": 0.2,
-                    "response_format": {"type": "json_object"},
                 },
                 timeout=60.0,
             )
+
             resp.raise_for_status()
             data = resp.json()
+
             content = data["choices"][0]["message"]["content"]
-            return json.loads(content)
-    except json.JSONDecodeError:
-        logger.error("Failed to parse Groq response as JSON")
-        return None
+
+            try:
+                return json.loads(content)
+            except json.JSONDecodeError:
+                start = content.find("{")
+                end = content.rfind("}") + 1
+                return json.loads(content[start:end])
+
     except Exception as e:
         logger.error("Groq API error: %s", e)
         return None
-
 
 def _empty_result() -> dict:
     return {
