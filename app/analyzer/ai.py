@@ -3,6 +3,7 @@ import logging
 import httpx
 from google import genai
 from app.config import get_settings
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -34,17 +35,15 @@ Rules:
 
 async def run_ai_analysis(diff: str, files: list[dict]) -> dict:
     file_list = ", ".join(f.get("filename", "") for f in files[:20])
-    prompt = f"## Files changed\n{file_list}\n\n## Diff\n```\n{diff[:15000]}\n```"
+    compressed_diff = compress_diff(diff)
+    prompt = f"## Files changed\n{file_list}\n\n## Diff\n```\n{compressed_diff}\n```"
 
     # Try Gemini first, fall back to Groq on failure
-    result = await _try_gemini(prompt)
-    if result is not None:
-        return result
-
-    logger.info("Gemini failed, falling back to Groq")
-    result = await _try_groq(prompt)
-    if result is not None:
-        return result
+    tasks = [_try_gemini(prompt), _try_groq(prompt)]
+    for task in tasks:
+        result = await task
+        if result is not None:
+            return result
 
     return _empty_result()
 
@@ -53,7 +52,7 @@ async def _try_gemini(prompt: str) -> dict | None:
     settings = get_settings()
     try:
         client = genai.Client(api_key=settings.gemini_api_key)
-        response = client.models.generate_content(
+        response = await asyncio.to_thread(client.models.generate_content,
             model="gemini-2.0-flash",
             contents=prompt,
             config=genai.types.GenerateContentConfig(
@@ -69,6 +68,14 @@ async def _try_gemini(prompt: str) -> dict | None:
     except Exception as e:
         logger.error("Gemini API error: %s", e)
         return None
+    
+def compress_diff(diff : str, max_chars : int = 8000) -> str:
+    lines = diff.splitlines()
+    important = [line for line in lines if line.startswith(('+', '-', '@@', '---', '+++'))]
+    compressed = "\n".join(important)
+    if len(compressed) > max_chars:
+        compressed = compressed[:max_chars] + "\n...[truncated]..."
+    return compressed
 
 
 async def _try_groq(prompt: str) -> dict | None:
