@@ -34,6 +34,7 @@ cp .env.example .env
 | `GITHUB_PRIVATE_KEY_PATH` | Path to the `.pem` private key file |
 | `GITHUB_WEBHOOK_SECRET` | The webhook secret you set in the GitHub App |
 | `GEMINI_API_KEY` | Google Gemini API key ([get one here](https://aistudio.google.com/apikey)) |
+| `GROQ_API_KEY` | Groq API key ([get one here](https://console.groq.com/keys)) |
 | `DODO_PAYMENTS_API_KEY` | *(optional)* Dodo Payments API key for Pro subscriptions |
 | `DODO_WEBHOOK_SECRET` | *(optional)* Dodo webhook signature secret |
 | `DATABASE_URL` | SQLite URL (default: `sqlite:///./autopr.db`) |
@@ -116,7 +117,7 @@ pytest tests/ -v
 1. A PR is opened or updated on a repo with the GitHub App installed.
 2. GitHub sends a webhook event to `/webhook`.
 3. The app verifies the signature, fetches the PR diff and file list.
-4. It runs static analysis (flake8) and AI analysis (Gemini) in parallel.
+4. It runs static analysis (flake8) and AI analysis (Gemini and Groq) in parallel.
 5. A risk score is calculated based on file count, change volume, sensitive files, and findings.
 6. If the installation is on the Pro plan, premium analysis is also run (complexity, security patterns, etc.).
 7. A formatted Markdown review comment is posted on the PR.
