@@ -1,5 +1,6 @@
 import json
 import logging
+import httpx
 from google import genai
 from app.config import get_settings
 
@@ -32,11 +33,24 @@ Rules:
 
 
 async def run_ai_analysis(diff: str, files: list[dict]) -> dict:
-    settings = get_settings()
-
     file_list = ", ".join(f.get("filename", "") for f in files[:20])
     prompt = f"## Files changed\n{file_list}\n\n## Diff\n```\n{diff[:15000]}\n```"
 
+    # Try Gemini first, fall back to Groq on failure
+    result = await _try_gemini(prompt)
+    if result is not None:
+        return result
+
+    logger.info("Gemini failed, falling back to Groq")
+    result = await _try_groq(prompt)
+    if result is not None:
+        return result
+
+    return _empty_result()
+
+
+async def _try_gemini(prompt: str) -> dict | None:
+    settings = get_settings()
     try:
         client = genai.Client(api_key=settings.gemini_api_key)
         response = client.models.generate_content(
@@ -48,17 +62,52 @@ async def run_ai_analysis(diff: str, files: list[dict]) -> dict:
                 response_mime_type="application/json",
             ),
         )
-
-        result = json.loads(response.text)
-        return result
-
+        return json.loads(response.text)
     except json.JSONDecodeError:
         logger.error("Failed to parse Gemini response as JSON")
-        return _empty_result()
+        return None
     except Exception as e:
         logger.error("Gemini API error: %s", e)
-        return _empty_result()
+        return None
 
+
+async def _try_groq(prompt: str) -> dict | None:
+    settings = get_settings()
+
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {settings.groq_api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": "llama-3.3-70b-versatile",
+                    "messages": [
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": prompt},
+                    ],
+                    "temperature": 0.2,
+                },
+                timeout=60.0,
+            )
+
+            resp.raise_for_status()
+            data = resp.json()
+
+            content = data["choices"][0]["message"]["content"]
+
+            try:
+                return json.loads(content)
+            except json.JSONDecodeError:
+                start = content.find("{")
+                end = content.rfind("}") + 1
+                return json.loads(content[start:end])
+
+    except Exception as e:
+        logger.error("Groq API error: %s", e)
+        return None
 
 def _empty_result() -> dict:
     return {
