@@ -8,9 +8,7 @@ _token_cache: dict[int, tuple[str, float]] = {}
 
 def _get_private_key() -> str:
     settings = get_settings()
-    with open(settings.github_private_key_path, "r") as f:
-        return f.read()
-
+    return settings.github_private_key
 
 def generate_jwt() -> str:
     settings = get_settings()
