@@ -63,7 +63,7 @@ async def setup(request: Request, installation_id: int):
 
     # Build Dodo checkout URL for Pro upgrade
     dashboard_url = f"{settings.app_url}/dashboard?installation_id={installation_id}"
-    pro_checkout_url = ""
+    pro_checkout_url = f"{settings.dodo_checkout_url}?{urlencode({'metadata[github_installation_id]': str(installation_id), 'success_url': dashboard_url})}"
     if settings.dodo_checkout_url:
         params = urlencode({
             "metadata[github_installation_id]": str(installation_id),
