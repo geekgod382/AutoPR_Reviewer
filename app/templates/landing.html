@@ -163,12 +163,12 @@
 </div>
 
 <script>
-    // Passed from server — whether the user is currently logged in
-    const isLoggedIn = user ? 'true' : 'false';
-    const oauthEnabled = outh_enabled ? 'true' : 'false';
+    // FIX 1 & 2: Use Jinja2 to render actual JS booleans (not strings)
+    const isLoggedIn = {{ 'true' if user else 'false' }};
+    const oauthEnabled = {{ 'true' if oauth_enabled else 'false' }};
 
     async function openDashboardModal() {
-        // If OAuth is configured and user is NOT logged in, redirect to login first
+        // FIX 3: isLoggedIn is now a real boolean, so !isLoggedIn works correctly
         if (oauthEnabled && !isLoggedIn) {
             window.location.href = '/auth/login?next=/';
             return;
@@ -183,7 +183,6 @@
         try {
             const res = await fetch('/api/installations');
 
-            // Token expired or user got logged out between page load and click
             if (res.status === 401) {
                 list.innerHTML = `
                     <p style="color:#f85149;">
@@ -231,12 +230,10 @@
         document.getElementById('installModal').classList.remove('open');
     }
 
-    // Close on backdrop click
     document.getElementById('installModal').addEventListener('click', function(e) {
         if (e.target === this) closeModal();
     });
 
-    // Close on Escape key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') closeModal();
     });
