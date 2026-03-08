@@ -67,7 +67,6 @@ async def setup(request: Request, installation_id: int):
     if settings.dodo_checkout_url:
         params = urlencode({
             "installation_id": str(installation_id),
-            "success_url": dashboard_url,
         })
         pro_checkout_url = f"{settings.dodo_checkout_url}&{params}"
 
