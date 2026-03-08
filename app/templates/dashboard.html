@@ -75,5 +75,8 @@
     {% if upgrade_url %}
     <a href="{{ upgrade_url }}" class="btn btn-pro">Upgrade to Pro 💎</a>
     {% endif %}
+    {% if cancel_url %}
+    <a href="{{ cancel_url }}" class="btn btn-danger">Cancel Subscription</a>
+    {% endif %}
 </div>
 {% endblock %}

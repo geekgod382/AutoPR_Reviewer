@@ -8,6 +8,11 @@ class Settings(BaseSettings):
     github_private_key: str
     github_webhook_secret: str
 
+    github_client_id: str = ""
+    github_client_secret: str = ""
+
+    session_secret_key: str = ""
+
     gemini_api_key: str
     groq_api_key: str
 

@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from app.webhook import router as webhook_router
 from app.payments import router as payments_router
 from app.web import router as web_router
+from app.oauth import router as oauth_router
 from app.database import create_tables
 
 
@@ -22,6 +23,7 @@ app = FastAPI(
 )
 
 app.include_router(web_router)
+app.include_router(oauth_router)
 app.include_router(webhook_router)
 app.include_router(payments_router)
 

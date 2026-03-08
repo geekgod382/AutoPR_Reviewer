@@ -55,6 +55,8 @@
         .btn-secondary:hover { background: #30363d; text-decoration: none; }
         .btn-pro { background: #8957e5; color: #fff; border-color: #a371f7; }
         .btn-pro:hover { background: #a371f7; text-decoration: none; }
+        .btn-danger { background: #da3633; color: #fff; border-color: #f85149; }
+        .btn-danger:hover { background: #f85149; text-decoration: none; }
 
         .card {
             background: #161b22;
@@ -90,6 +92,7 @@
     <nav>
         <span class="logo">🤖 AutoPR Reviewer</span>
         <a href="/">Home</a>
+        {% block nav_extra %}{% endblock %}
     </nav>
 
     <div class="container">

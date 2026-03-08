@@ -1,29 +1,134 @@
 import logging
 from urllib.parse import urlencode
 
+import httpx
 from fastapi import APIRouter, Request, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 
 from app.config import get_settings
 from app.database import get_session
 from app.github_client import get_installation
 from app.models import Installation, ReviewLog
+from app.oauth import get_session_data
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["web"])
 templates = Jinja2Templates(directory="app/templates")
 
+GITHUB_USER_INSTALLATIONS_URL = "https://api.github.com/user/installations"
+
 
 @router.get("/", response_class=HTMLResponse)
 async def landing(request: Request):
     settings = get_settings()
     install_url = f"https://github.com/apps/{settings.github_app_slug}/installations/new"
+    session = get_session_data(request)
     return templates.TemplateResponse(
         "landing.html",
-        {"request": request, "install_url": install_url},
+        {
+            "request": request,
+            "install_url": install_url,
+            "user": session,           # None if not logged in
+            "oauth_enabled": bool(settings.github_client_id),
+        },
     )
+
+
+@router.get("/api/installations", response_class=JSONResponse)
+async def list_installations(request: Request):
+    """
+    Return installations visible to the authenticated user.
+
+    - If the user is logged in via GitHub OAuth, we call GitHub's
+      GET /user/installations with their token and return only
+      those installation IDs that also exist in our local DB.
+
+    - If OAuth is not configured (GITHUB_CLIENT_ID is empty), we
+      fall back to returning all DB installations (dev/single-tenant mode).
+    """
+    settings = get_settings()
+
+    # ── Dev / single-tenant fallback (no OAuth configured) ───────────────────
+    if not settings.github_client_id:
+        db = get_session()
+        try:
+            installations = db.query(Installation).all()
+            return [
+                {
+                    "installation_id": inst.github_installation_id,
+                    "owner": inst.owner,
+                    "plan": inst.plan,
+                    "created_at": inst.created_at.isoformat() if inst.created_at else None,
+                }
+                for inst in installations
+            ]
+        finally:
+            db.close()
+
+    # ── Authenticated path ────────────────────────────────────────────────────
+    session_data = get_session_data(request)
+    if not session_data:
+        raise HTTPException(
+            status_code=401,
+            detail="Not authenticated. Please log in with GitHub first.",
+        )
+
+    access_token = session_data["access_token"]
+
+    # Fetch all installations this user has access to from GitHub
+    # GitHub paginates at 100 per page; loop until we have them all.
+    github_installation_ids: set[int] = set()
+    page = 1
+    async with httpx.AsyncClient() as client:
+        while True:
+            resp = await client.get(
+                GITHUB_USER_INSTALLATIONS_URL,
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Accept": "application/vnd.github+json",
+                },
+                params={"per_page": 100, "page": page},
+            )
+            if resp.status_code == 401:
+                raise HTTPException(
+                    status_code=401,
+                    detail="GitHub token expired or revoked. Please log in again.",
+                )
+            resp.raise_for_status()
+            data = resp.json()
+            batch = data.get("installations", [])
+            if not batch:
+                break
+            for inst in batch:
+                github_installation_ids.add(inst["id"])
+            if len(batch) < 100:
+                break
+            page += 1
+
+    if not github_installation_ids:
+        return []
+
+    # Filter our local DB to only those installation IDs
+    db = get_session()
+    try:
+        installations = (
+            db.query(Installation)
+            .filter(Installation.github_installation_id.in_(github_installation_ids))
+            .all()
+        )
+        return [
+            {
+                "installation_id": inst.github_installation_id,
+                "owner": inst.owner,
+                "plan": inst.plan,
+                "created_at": inst.created_at.isoformat() if inst.created_at else None,
+            }
+            for inst in installations
+        ]
+    finally:
+        db.close()
 
 
 @router.get("/setup", response_class=HTMLResponse)
@@ -39,10 +144,10 @@ async def setup(request: Request, installation_id: int):
 
     owner = gh_installation.get("account", {}).get("login", "unknown")
 
-    session = get_session()
+    db = get_session()
     try:
         installation = (
-            session.query(Installation)
+            db.query(Installation)
             .filter_by(github_installation_id=installation_id)
             .first()
         )
@@ -52,14 +157,14 @@ async def setup(request: Request, installation_id: int):
                 owner=owner,
                 plan="basic",
             )
-            session.add(installation)
-            session.commit()
-            session.refresh(installation)
+            db.add(installation)
+            db.commit()
+            db.refresh(installation)
         else:
             installation.owner = owner
-            session.commit()
+            db.commit()
     finally:
-        session.close()
+        db.close()
 
     # Build Dodo checkout URL for Pro upgrade
     dashboard_url = f"{settings.app_url}/dashboard?installation_id={installation_id}"
@@ -87,10 +192,10 @@ async def setup(request: Request, installation_id: int):
 async def dashboard(request: Request, installation_id: int):
     settings = get_settings()
 
-    session = get_session()
+    db = get_session()
     try:
         installation = (
-            session.query(Installation)
+            db.query(Installation)
             .filter_by(github_installation_id=installation_id)
             .first()
         )
@@ -98,22 +203,27 @@ async def dashboard(request: Request, installation_id: int):
             raise HTTPException(status_code=404, detail="Installation not found")
 
         review_count = (
-            session.query(ReviewLog)
+            db.query(ReviewLog)
             .filter_by(installation_id=installation.id)
             .count()
         )
     finally:
-        session.close()
+        db.close()
 
     # Build upgrade URL
     dashboard_url = f"{settings.app_url}/dashboard?installation_id={installation_id}"
-    upgrade_url = ""
-    if settings.dodo_checkout_url and installation.plan != "pro":
-        params = urlencode({
-            "metadata[github_installation_id]": str(installation_id),
-            "success_url": dashboard_url,
-        })
-        upgrade_url = f"{settings.dodo_checkout_url}&{params}"
+    upgrade_url = None
+    cancel_url = None
+
+    if installation.plan != "pro":
+        if settings.dodo_checkout_url:
+            params = urlencode({
+                "metadata[github_installation_id]": str(installation_id),
+                "success_url": dashboard_url,
+            })
+            upgrade_url = f"{settings.dodo_checkout_url}&{params}"
+    else:
+        cancel_url = f"/cancel-subscription?installation_id={installation_id}"
 
     manage_url = f"https://github.com/settings/installations/{installation_id}"
 
@@ -124,6 +234,29 @@ async def dashboard(request: Request, installation_id: int):
             "installation": installation,
             "review_count": review_count,
             "upgrade_url": upgrade_url,
+            "cancel_url": cancel_url,
             "manage_url": manage_url,
         },
+    )
+
+
+@router.get("/cancel-subscription")
+async def cancel_subscription(installation_id: int):
+    db = get_session()
+
+    installation = (
+        db.query(Installation)
+        .filter_by(github_installation_id=installation_id)
+        .first()
+    )
+
+    if installation:
+        installation.plan = "free"
+        db.commit()
+
+    db.close()
+
+    return RedirectResponse(
+        f"/dashboard?installation_id={installation_id}",
+        status_code=303,
     )

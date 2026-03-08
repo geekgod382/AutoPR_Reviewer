@@ -6,6 +6,7 @@
     .hero { text-align: center; padding: 3rem 0 2rem; }
     .hero h1 { font-size: 2.4rem; margin-bottom: 0.75rem; }
     .hero p { font-size: 1.15rem; color: #8b949e; max-width: 540px; margin: 0 auto 2rem; }
+    .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
 
     .features { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 2rem 0; }
     @media (max-width: 600px) { .features { grid-template-columns: 1fr; } }
@@ -22,13 +23,99 @@
     .plan-card ul { list-style: none; text-align: left; margin-bottom: 1rem; }
     .plan-card ul li { padding: 0.3rem 0; font-size: 0.9rem; color: #8b949e; }
     .plan-card ul li::before { content: "✓ "; color: #3fb950; }
+
+    /* User avatar pill in nav */
+    .user-pill { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; }
+    .user-pill img { width: 24px; height: 24px; border-radius: 50%; }
+    .user-pill span { font-size: 0.9rem; color: #e6edf3; }
+
+    /* Modal */
+    .modal-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.75);
+        z-index: 100;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-box {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 10px;
+        padding: 1.75rem;
+        width: 100%;
+        max-width: 480px;
+        margin: 1.5rem;
+        position: relative;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    .modal-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: none;
+        border: none;
+        color: #8b949e;
+        font-size: 1.2rem;
+        cursor: pointer;
+        line-height: 1;
+        padding: 0.25rem;
+    }
+    .modal-close:hover { color: #e6edf3; }
+    .install-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.85rem 0;
+        border-bottom: 1px solid #30363d;
+    }
+    .install-row:last-child { border-bottom: none; }
+    .install-name { font-weight: 600; margin-bottom: 0.2rem; }
+    .install-meta { font-size: 0.8rem; color: #8b949e; }
+
+    .btn-danger { background: #da3633; color: #fff; border-color: #f85149; }
+    .btn-danger:hover { background: #f85149; text-decoration: none; }
+{% endblock %}
+
+{% block nav_extra %}
+    {% if user %}
+    <div class="user-pill" style="margin-left:auto; display:flex; align-items:center; gap:0.5rem;">
+        <img src="{{ user.user_avatar }}" alt="{{ user.user_login }}" width="24" height="24"
+             style="border-radius:50%; border:1px solid #30363d;">
+        <span style="font-size:0.9rem; color:#e6edf3;">{{ user.user_login }}</span>
+        <a href="/auth/logout" class="btn btn-danger"
+           style="padding:0.3rem 0.75rem; font-size:0.8rem; margin-left:0.5rem;">Logout</a>
+    </div>
+    {% elif oauth_enabled %}
+    <a href="/auth/login" class="btn btn-secondary"
+       style="margin-left:auto; padding:0.35rem 1rem; font-size:0.85rem;">
+        Login with GitHub
+    </a>
+    {% endif %}
 {% endblock %}
 
 {% block content %}
 <div class="hero">
     <h1>🤖 AutoPR Reviewer</h1>
     <p>AI-powered code reviews for every pull request. Catch bugs, style issues, and security problems automatically.</p>
-    <a href="{{ install_url }}" class="btn btn-primary">Install on GitHub</a>
+    <div class="hero-actions">
+        <a href="{{ install_url }}" class="btn btn-primary">Install on GitHub</a>
+        <button class="btn btn-secondary" onclick="openDashboardModal()">View Dashboard</button>
+    </div>
+</div>
+
+<!-- Installation selector modal -->
+<div id="installModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal()" aria-label="Close">✕</button>
+        <h3 id="modalTitle" style="margin-bottom:1.25rem;">Select an Installation</h3>
+        <div id="installList">
+            <p style="color:#8b949e;">Loading installations…</p>
+        </div>
+    </div>
 </div>
 
 <div class="features">
@@ -74,4 +161,90 @@
         </ul>
     </div>
 </div>
+
+<script>
+    // Passed from server — whether the user is currently logged in
+    const isLoggedIn = user ? 'true' : 'false';
+    const oauthEnabled = outh_enabled ? 'true' : 'false';
+
+    async function openDashboardModal() {
+        // If OAuth is configured and user is NOT logged in, redirect to login first
+        if (oauthEnabled && !isLoggedIn) {
+            window.location.href = '/auth/login?next=/';
+            return;
+        }
+
+        const modal = document.getElementById('installModal');
+        const list  = document.getElementById('installList');
+
+        modal.classList.add('open');
+        list.innerHTML = '<p style="color:#8b949e;">Loading installations…</p>';
+
+        try {
+            const res = await fetch('/api/installations');
+
+            // Token expired or user got logged out between page load and click
+            if (res.status === 401) {
+                list.innerHTML = `
+                    <p style="color:#f85149;">
+                        Your session has expired.
+                        <a href="/auth/login?next=/">Log in again</a> to continue.
+                    </p>`;
+                return;
+            }
+
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const installations = await res.json();
+
+            if (!installations.length) {
+                list.innerHTML = `
+                    <p style="color:#8b949e;">
+                        No installations found for your account.
+                        <a href="{{ install_url }}">Install the app</a> on a repo first.
+                    </p>`;
+                return;
+            }
+
+            list.innerHTML = installations.map(inst => `
+                <div class="install-row">
+                    <div>
+                        <div class="install-name">
+                            ${escHtml(inst.owner)}
+                            <span class="badge ${inst.plan === 'pro' ? 'badge-pro' : 'badge-basic'}"
+                                  style="margin-left:0.4rem;">${escHtml(inst.plan)}</span>
+                        </div>
+                        <div class="install-meta">Installation #${inst.installation_id}</div>
+                    </div>
+                    <a href="/dashboard?installation_id=${inst.installation_id}"
+                       class="btn btn-secondary"
+                       style="padding:0.4rem 1rem; font-size:0.85rem;">Open →</a>
+                </div>
+            `).join('');
+
+        } catch (err) {
+            list.innerHTML = '<p style="color:#f85149;">Failed to load installations. Please try again.</p>';
+            console.error('Installations fetch error:', err);
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('installModal').classList.remove('open');
+    }
+
+    // Close on backdrop click
+    document.getElementById('installModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeModal();
+    });
+
+    function escHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+</script>
 {% endblock %}
