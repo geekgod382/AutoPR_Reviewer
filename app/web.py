@@ -66,7 +66,8 @@ async def setup(request: Request, installation_id: int):
     pro_checkout_url = ""
     if settings.dodo_checkout_url:
         params = urlencode({
-            "installation_id": str(installation_id),
+            "metadata[github_installation_id]": str(installation_id),
+            "success_url": dashboard_url,
         })
         pro_checkout_url = f"{settings.dodo_checkout_url}&{params}"
 
@@ -112,7 +113,7 @@ async def dashboard(request: Request, installation_id: int):
             "metadata[github_installation_id]": str(installation_id),
             "success_url": dashboard_url,
         })
-        upgrade_url = f"{settings.dodo_checkout_url}?{params}"
+        upgrade_url = f"{settings.dodo_checkout_url}&{params}"
 
     manage_url = f"https://github.com/settings/installations/{installation_id}"
 
