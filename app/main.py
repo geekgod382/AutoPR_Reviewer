@@ -29,5 +29,5 @@ app.include_router(payments_router)
 
 
 @app.get("/health")
-async def health():
+def health():
     return {"status": "ok"}
