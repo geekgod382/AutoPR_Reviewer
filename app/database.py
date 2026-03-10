@@ -9,10 +9,12 @@ class Base(DeclarativeBase):
 
 def get_engine():
     settings = get_settings()
-    return create_engine(
-        settings.database_url,
-        connect_args={"check_same_thread": False},
-    )
+    db_url = settings.database_url
+
+    # check_same_thread is a SQLite-only argument — don't pass it for Postgres
+    connect_args = {"check_same_thread": False} if db_url.startswith("sqlite") else {}
+
+    return create_engine(db_url, connect_args=connect_args)
 
 
 def get_session() -> Session:
