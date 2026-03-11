@@ -22,22 +22,22 @@ AI-powered GitHub App that automatically reviews Pull Requests — detects bugs,
 
 ### 1. Configure Environment
 
-Copy the example env file and fill in your values:
-
-```bash
-cp .env.example .env
-```
+Store these keys in .env file :
 
 | Variable | Description |
 |---|---|
 | `GITHUB_APP_ID` | Your GitHub App's ID |
 | `GITHUB_PRIVATE_KEY_PATH` | Path to the `.pem` private key file |
 | `GITHUB_WEBHOOK_SECRET` | The webhook secret you set in the GitHub App |
+| `GITHUB_CLIENT_ID` | Get this ID form the Github page of your app |
+| `GITHUB_CLIENT_SECRET` | Get this secret form the Github page of your app |
 | `GEMINI_API_KEY` | Google Gemini API key ([get one here](https://aistudio.google.com/apikey)) |
 | `GROQ_API_KEY` | Groq API key ([get one here](https://console.groq.com/keys)) |
 | `DODO_PAYMENTS_API_KEY` | *(optional)* Dodo Payments API key for Pro subscriptions |
 | `DODO_WEBHOOK_SECRET` | *(optional)* Dodo webhook signature secret |
-| `DATABASE_URL` | SQLite URL (default: `sqlite:///./autopr.db`) |
+| `DATABASE_URL` | Postgres Internal Database URL |
+
+For this project, I used the Postgres database on Render
 
 ### 2. Run Locally
 
@@ -80,11 +80,11 @@ AutoPR-Reviewer/
 │   ├── webhook.py           # Webhook endpoint + signature verification
 │   ├── github_client.py     # GitHub API calls (diff, files, comments)
 │   ├── reviewer.py          # Orchestrator — runs all analyzers
-│   ├── models.py            # SQLAlchemy models
+│   ├── models.py            # Postgres models
 │   ├── database.py          # DB engine + session
 │   ├── payments.py          # Dodo Payments webhook + plan lookup
 │   └── analyzer/
-│       ├── ai.py            # Gemini-based AI review
+│       ├── ai.py            # Gemini and Groq based AI review
 │       ├── static.py        # flake8 static analysis
 │       ├── risk.py          # Risk score calculation
 │       └── premium.py       # Pro-only: security, complexity, etc.
