@@ -53,7 +53,7 @@ def _set_session_cookie(response: RedirectResponse, data: dict) -> None:
         max_age=SESSION_MAX_AGE,
         httponly=True,
         samesite="lax",
-        secure=False,   # Set True in production (HTTPS)
+        secure=True,
     )
 
 

@@ -163,12 +163,10 @@
 </div>
 
 <script>
-    // FIX 1 & 2: Use Jinja2 to render actual JS booleans (not strings)
     const isLoggedIn = {{ 'true' if user else 'false' }};
     const oauthEnabled = {{ 'true' if oauth_enabled else 'false' }};
 
     async function openDashboardModal() {
-        // FIX 3: isLoggedIn is now a real boolean, so !isLoggedIn works correctly
         if (oauthEnabled && !isLoggedIn) {
             window.location.href = '/auth/login?next=/';
             return;
