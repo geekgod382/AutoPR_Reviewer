@@ -21,6 +21,19 @@ templates = Jinja2Templates(directory="app/templates")
 GITHUB_USER_INSTALLATIONS_URL = "https://api.github.com/user/installations"
 
 
+def _build_checkout_url(base_url: str, installation_id: int, success_url: str) -> str:
+    """
+    Build a Dodo static checkout URL with metadata.
+    Dodo passes query params prefixed with `metadata_` into the subscription metadata.
+    e.g. ?metadata_github_installation_id=123 → data.metadata.github_installation_id = "123"
+    """
+    params = urlencode({
+        "metadata_github_installation_id": str(installation_id),
+        "redirect_url": success_url,
+    })
+    return f"{base_url}&{params}"
+
+
 @router.get("/", response_class=HTMLResponse)
 async def landing(request: Request):
     settings = get_settings()
@@ -147,12 +160,11 @@ async def setup(request: Request, installation_id: int):
     dashboard_url = f"{settings.app_url}/dashboard?installation_id={installation_id}"
     pro_checkout_url = ""
     if settings.dodo_checkout_url:
-        # flash=pro_activated so dashboard shows the success popup after payment
-        params = urlencode({
-            "metadata[github_installation_id]": str(installation_id),
-            "success_url": f"{dashboard_url}&flash=pro_activated",
-        })
-        pro_checkout_url = f"{settings.dodo_checkout_url}&{params}"
+        pro_checkout_url = _build_checkout_url(
+            settings.dodo_checkout_url,
+            installation_id,
+            f"{dashboard_url}&flash=pro_activated",
+        )
 
     return templates.TemplateResponse(
         "setup.html",
@@ -186,7 +198,6 @@ async def dashboard(request: Request, installation_id: int, flash: str = ""):
             .count()
         )
 
-        # Fetch active subscription to check expiry
         active_sub = (
             db.query(Subscription)
             .filter_by(installation_id=installation.id, status="active")
@@ -196,12 +207,10 @@ async def dashboard(request: Request, installation_id: int, flash: str = ""):
     finally:
         db.close()
 
-    # Compute days until expiry for the banner
     expiry_days = None
     if active_sub and active_sub.expires_at:
         now = datetime.now(timezone.utc)
         expires = active_sub.expires_at
-        # Make expires_at timezone-aware if it isn't already
         if expires.tzinfo is None:
             expires = expires.replace(tzinfo=timezone.utc)
         delta = (expires - now).days
@@ -214,11 +223,11 @@ async def dashboard(request: Request, installation_id: int, flash: str = ""):
 
     if installation.plan != "pro":
         if settings.dodo_checkout_url:
-            params = urlencode({
-                "metadata[github_installation_id]": str(installation_id),
-                "success_url": f"{dashboard_url}&flash=pro_activated",
-            })
-            upgrade_url = f"{settings.dodo_checkout_url}&{params}"
+            upgrade_url = _build_checkout_url(
+                settings.dodo_checkout_url,
+                installation_id,
+                f"{dashboard_url}&flash=pro_activated",
+            )
     else:
         cancel_url = f"/cancel-subscription?installation_id={installation_id}"
 
@@ -233,8 +242,8 @@ async def dashboard(request: Request, installation_id: int, flash: str = ""):
             "upgrade_url": upgrade_url,
             "cancel_url": cancel_url,
             "manage_url": manage_url,
-            "flash": flash,           # "pro_activated" | "cancelled" | ""
-            "expiry_days": expiry_days,  # int 0-7 or None
+            "flash": flash,
+            "expiry_days": expiry_days,
         },
     )
 
@@ -254,7 +263,6 @@ async def cancel_subscription(installation_id: int):
 
     db.close()
 
-    # flash=cancelled so dashboard shows the cancellation popup
     return RedirectResponse(
         f"/dashboard?installation_id={installation_id}&flash=cancelled",
         status_code=303,
