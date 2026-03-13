@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import logging
+from datetime import datetime
 
 from fastapi import APIRouter, Request, HTTPException
 from app.config import get_settings
@@ -41,7 +42,7 @@ async def dodo_webhook(request: Request):
 
 
 async def _handle_subscription_created(data: dict):
-    session = get_session()
+    db = get_session()
     try:
         metadata = data.get("metadata", {})
         installation_id = metadata.get("github_installation_id")
@@ -50,7 +51,7 @@ async def _handle_subscription_created(data: dict):
             return
 
         installation = (
-            session.query(Installation)
+            db.query(Installation)
             .filter_by(github_installation_id=int(installation_id))
             .first()
         )
@@ -58,40 +59,57 @@ async def _handle_subscription_created(data: dict):
             logger.warning("Installation %s not found", installation_id)
             return
 
+        # Parse expiry date if Dodo provides it
+        expires_at = None
+        raw_expiry = data.get("current_period_end") or data.get("expires_at")
+        if raw_expiry:
+            try:
+                expires_at = datetime.fromisoformat(raw_expiry.replace("Z", "+00:00"))
+            except (ValueError, AttributeError):
+                logger.warning("Could not parse expiry date: %s", raw_expiry)
+
         sub = Subscription(
             installation_id=installation.id,
             dodo_payment_id=data.get("id"),
             status="active",
             plan="pro",
+            expires_at=expires_at,
         )
-        session.add(sub)
+        db.add(sub)
         installation.plan = "pro"
-        session.commit()
+        db.commit()
         logger.info("Pro subscription activated for installation %s", installation_id)
+
     finally:
-        session.close()
+        db.close()
 
 
 async def _handle_subscription_updated(data: dict):
-    session = get_session()
+    db = get_session()
     try:
         sub = (
-            session.query(Subscription)
+            db.query(Subscription)
             .filter_by(dodo_payment_id=data.get("id"))
             .first()
         )
         if sub:
             sub.status = data.get("status", sub.status)
-            session.commit()
+            raw_expiry = data.get("current_period_end") or data.get("expires_at")
+            if raw_expiry:
+                try:
+                    sub.expires_at = datetime.fromisoformat(raw_expiry.replace("Z", "+00:00"))
+                except (ValueError, AttributeError):
+                    pass
+            db.commit()
     finally:
-        session.close()
+        db.close()
 
 
 async def _handle_subscription_cancelled(data: dict):
-    session = get_session()
+    db = get_session()
     try:
         sub = (
-            session.query(Subscription)
+            db.query(Subscription)
             .filter_by(dodo_payment_id=data.get("id"))
             .first()
         )
@@ -99,28 +117,26 @@ async def _handle_subscription_cancelled(data: dict):
             sub.status = "cancelled"
             sub.plan = "basic"
             installation = (
-                session.query(Installation)
+                db.query(Installation)
                 .filter_by(id=sub.installation_id)
                 .first()
             )
             if installation:
                 installation.plan = "basic"
-            session.commit()
+            db.commit()
             logger.info("Subscription cancelled for dodo_payment_id %s", data.get("id"))
     finally:
-        session.close()
+        db.close()
 
 
 def get_installation_plan(github_installation_id: int) -> str:
-    session = get_session()
+    db = get_session()
     try:
         installation = (
-            session.query(Installation)
+            db.query(Installation)
             .filter_by(github_installation_id=github_installation_id)
             .first()
         )
-        if installation:
-            return installation.plan
-        return "basic"
+        return installation.plan if installation else "basic"
     finally:
-        session.close()
+        db.close()

@@ -2,8 +2,6 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from sqlalchemy import text
-from fastapi.staticfiles import StaticFiles
-import os
 
 from app.webhook import router as webhook_router
 from app.payments import router as payments_router
@@ -31,12 +29,13 @@ app.include_router(webhook_router)
 app.include_router(payments_router)
 
 
-STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
-
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-
 @app.api_route("/health", methods=["GET", "HEAD"])
 def health():
+    """
+    Pings the database with a lightweight query so UptimeRobot's 5-minute
+    pings also count as DB activity — preventing Render's free Postgres
+    from being flagged as inactive and deleted after 90 days.
+    """
     try:
         db = get_session()
         db.execute(text("SELECT 1"))

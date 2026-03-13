@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timezone
 from urllib.parse import urlencode
 
 import httpx
@@ -9,7 +10,7 @@ from fastapi.templating import Jinja2Templates
 from app.config import get_settings
 from app.database import get_session
 from app.github_client import get_installation
-from app.models import Installation, ReviewLog
+from app.models import Installation, ReviewLog, Subscription
 from app.oauth import get_session_data
 
 logger = logging.getLogger(__name__)
@@ -30,7 +31,7 @@ async def landing(request: Request):
         {
             "request": request,
             "install_url": install_url,
-            "user": session,           # None if not logged in
+            "user": session,
             "oauth_enabled": bool(settings.github_client_id),
         },
     )
@@ -38,19 +39,8 @@ async def landing(request: Request):
 
 @router.get("/api/installations", response_class=JSONResponse)
 async def list_installations(request: Request):
-    """
-    Return installations visible to the authenticated user.
-
-    - If the user is logged in via GitHub OAuth, we call GitHub's
-      GET /user/installations with their token and return only
-      those installation IDs that also exist in our local DB.
-
-    - If OAuth is not configured (GITHUB_CLIENT_ID is empty), we
-      fall back to returning all DB installations (dev/single-tenant mode).
-    """
     settings = get_settings()
 
-    # ── Dev / single-tenant fallback (no OAuth configured) ───────────────────
     if not settings.github_client_id:
         db = get_session()
         try:
@@ -67,18 +57,11 @@ async def list_installations(request: Request):
         finally:
             db.close()
 
-    # ── Authenticated path ────────────────────────────────────────────────────
     session_data = get_session_data(request)
     if not session_data:
-        raise HTTPException(
-            status_code=401,
-            detail="Not authenticated. Please log in with GitHub first.",
-        )
+        raise HTTPException(status_code=401, detail="Not authenticated. Please log in with GitHub first.")
 
     access_token = session_data["access_token"]
-
-    # Fetch all installations this user has access to from GitHub
-    # GitHub paginates at 100 per page; loop until we have them all.
     github_installation_ids: set[int] = set()
     page = 1
     async with httpx.AsyncClient() as client:
@@ -92,10 +75,7 @@ async def list_installations(request: Request):
                 params={"per_page": 100, "page": page},
             )
             if resp.status_code == 401:
-                raise HTTPException(
-                    status_code=401,
-                    detail="GitHub token expired or revoked. Please log in again.",
-                )
+                raise HTTPException(status_code=401, detail="GitHub token expired or revoked. Please log in again.")
             resp.raise_for_status()
             data = resp.json()
             batch = data.get("installations", [])
@@ -110,7 +90,6 @@ async def list_installations(request: Request):
     if not github_installation_ids:
         return []
 
-    # Filter our local DB to only those installation IDs
     db = get_session()
     try:
         installations = (
@@ -135,7 +114,6 @@ async def list_installations(request: Request):
 async def setup(request: Request, installation_id: int):
     settings = get_settings()
 
-    # Fetch installation info from GitHub and upsert DB record
     try:
         gh_installation = await get_installation(installation_id)
     except Exception:
@@ -166,13 +144,13 @@ async def setup(request: Request, installation_id: int):
     finally:
         db.close()
 
-    # Build Dodo checkout URL for Pro upgrade
     dashboard_url = f"{settings.app_url}/dashboard?installation_id={installation_id}"
     pro_checkout_url = ""
     if settings.dodo_checkout_url:
+        # flash=pro_activated so dashboard shows the success popup after payment
         params = urlencode({
             "metadata[github_installation_id]": str(installation_id),
-            "success_url": dashboard_url,
+            "success_url": f"{dashboard_url}&flash=pro_activated",
         })
         pro_checkout_url = f"{settings.dodo_checkout_url}&{params}"
 
@@ -189,7 +167,7 @@ async def setup(request: Request, installation_id: int):
 
 
 @router.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request, installation_id: int):
+async def dashboard(request: Request, installation_id: int, flash: str = ""):
     settings = get_settings()
 
     db = get_session()
@@ -207,10 +185,29 @@ async def dashboard(request: Request, installation_id: int):
             .filter_by(installation_id=installation.id)
             .count()
         )
+
+        # Fetch active subscription to check expiry
+        active_sub = (
+            db.query(Subscription)
+            .filter_by(installation_id=installation.id, status="active")
+            .order_by(Subscription.created_at.desc())
+            .first()
+        )
     finally:
         db.close()
 
-    # Build upgrade URL
+    # Compute days until expiry for the banner
+    expiry_days = None
+    if active_sub and active_sub.expires_at:
+        now = datetime.now(timezone.utc)
+        expires = active_sub.expires_at
+        # Make expires_at timezone-aware if it isn't already
+        if expires.tzinfo is None:
+            expires = expires.replace(tzinfo=timezone.utc)
+        delta = (expires - now).days
+        if 0 <= delta <= 7:
+            expiry_days = delta
+
     dashboard_url = f"{settings.app_url}/dashboard?installation_id={installation_id}"
     upgrade_url = None
     cancel_url = None
@@ -219,7 +216,7 @@ async def dashboard(request: Request, installation_id: int):
         if settings.dodo_checkout_url:
             params = urlencode({
                 "metadata[github_installation_id]": str(installation_id),
-                "success_url": dashboard_url,
+                "success_url": f"{dashboard_url}&flash=pro_activated",
             })
             upgrade_url = f"{settings.dodo_checkout_url}&{params}"
     else:
@@ -236,6 +233,8 @@ async def dashboard(request: Request, installation_id: int):
             "upgrade_url": upgrade_url,
             "cancel_url": cancel_url,
             "manage_url": manage_url,
+            "flash": flash,           # "pro_activated" | "cancelled" | ""
+            "expiry_days": expiry_days,  # int 0-7 or None
         },
     )
 
@@ -249,14 +248,14 @@ async def cancel_subscription(installation_id: int):
         .filter_by(github_installation_id=installation_id)
         .first()
     )
-
     if installation:
-        installation.plan = "free"
+        installation.plan = "basic"
         db.commit()
 
     db.close()
 
+    # flash=cancelled so dashboard shows the cancellation popup
     return RedirectResponse(
-        f"/dashboard?installation_id={installation_id}",
+        f"/dashboard?installation_id={installation_id}&flash=cancelled",
         status_code=303,
     )
