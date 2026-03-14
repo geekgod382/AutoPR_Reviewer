@@ -30,7 +30,8 @@ Rules:
 - Only report real issues, not nitpicks
 - If there are no issues in a category, return an empty array
 - Be specific about file names and what the issue is
-- Keep descriptions concise but actionable"""
+- Keep descriptions concise but actionable
+And provide proper suggestions for any issues you find. Focus on the most important problems in the code."""
 
 
 async def run_ai_analysis(diff: str, files: list[dict]) -> dict:
@@ -38,7 +39,6 @@ async def run_ai_analysis(diff: str, files: list[dict]) -> dict:
     compressed_diff = compress_diff(diff)
     prompt = f"## Files changed\n{file_list}\n\n## Diff\n```\n{compressed_diff}\n```"
 
-    # Try Gemini first, fall back to Groq on failure
     tasks = [_try_gemini(prompt), _try_groq(prompt)]
     for task in tasks:
         result = await task
