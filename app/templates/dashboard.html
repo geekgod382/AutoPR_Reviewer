@@ -7,11 +7,20 @@
     .dash-header h1 { font-size: 1.8rem; margin-bottom: 0.25rem; }
     .dash-header p { color: #8b949e; }
 
-    .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
-    @media (max-width: 600px) { .stat-grid { grid-template-columns: 1fr; } }
+    /* Stat grid — 3 cols on desktop, 2 on mobile (avoids single-column squish) */
+    .stat-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    @media (max-width: 600px) {
+        .stat-grid { grid-template-columns: 1fr 1fr; }
+        .stat-grid .stat-card:last-child { grid-column: 1 / -1; }
+    }
 
     .stat-card { text-align: center; }
-    .stat-card .stat-value { font-size: 2rem; font-weight: 700; }
+    .stat-card .stat-value { font-size: 2rem; font-weight: 700; overflow-wrap: break-word; }
     .stat-card .stat-label { font-size: 0.85rem; color: #8b949e; margin-top: 0.25rem; }
 
     .info-row { display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px solid #30363d; }
@@ -36,6 +45,27 @@
     }
     .expiry-banner .expiry-text { color: #f0a500; }
     .expiry-banner .expiry-text strong { color: #ffc14d; }
+
+    /* Payment pending hint */
+    .payment-pending-hint {
+        background: #0d2a1a;
+        border: 1px solid #238636;
+        border-radius: 8px;
+        padding: 0.75rem 1.25rem;
+        margin-bottom: 1.25rem;
+        font-size: 0.875rem;
+        color: #3fb950;
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 2.5rem 1rem;
+        color: #8b949e;
+    }
+    .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+    .empty-state h3 { color: #e6edf3; font-size: 1.1rem; margin-bottom: 0.5rem; }
+    .empty-state p { font-size: 0.9rem; line-height: 1.6; max-width: 420px; margin: 0 auto; }
 
     /* Flash popup modal */
     .flash-backdrop {
@@ -100,20 +130,20 @@
         border-color: #58a6ff;
     }
     .contact-form textarea { min-height: 110px; }
-    #contactSuccess {
-        display: none;
-        color: #3fb950;
-        font-size: 0.9rem;
-        margin-top: 0.5rem;
-    }
 
-    .btn-danger { background: #da3633; color: #fff; border-color: #f85149; }
-    .btn-danger:hover { background: #f85149; text-decoration: none; }
+    #sendBtn { transition: background 0.15s; }
+    #sendBtn.sent {
+        background: #1a3a26;
+        border-color: #238636;
+        color: #3fb950;
+        cursor: default;
+        pointer-events: none;
+    }
 {% endblock %}
 
 {% block content %}
 
-{# ── Expiry banner (only when ≤7 days remain) ── #}
+{# ── Expiry banner (only when ≤7 days remain on Pro) ── #}
 {% if expiry_days is not none %}
 <div class="expiry-banner">
     <span class="expiry-text">
@@ -130,6 +160,13 @@
     {% if upgrade_url %}
     <a href="{{ upgrade_url }}" class="btn btn-pro" style="white-space: nowrap;">Renew Pro 💎</a>
     {% endif %}
+</div>
+{% endif %}
+
+{# ── Payment pending hint (shown after checkout redirect before webhook fires) ── #}
+{% if flash == 'pro_activated' and installation.plan != 'pro' %}
+<div class="payment-pending-hint">
+    ✓ Payment received — activating your Pro plan now. If the badge hasn't updated in a few seconds, refresh the page.
 </div>
 {% endif %}
 
@@ -152,10 +189,22 @@
         <div class="stat-label">Current Plan</div>
     </div>
     <div class="card stat-card">
-        <div class="stat-value">{{ installation.owner }}</div>
+        <div class="stat-value" style="font-size: 1.25rem;">{{ installation.owner }}</div>
         <div class="stat-label">GitHub Account</div>
     </div>
 </div>
+
+{# ── Empty state — shown when no PRs have been reviewed yet ── #}
+{% if review_count == 0 %}
+<div class="card empty-state">
+    <div class="empty-icon">🔍</div>
+    <h3>No reviews yet</h3>
+    <p>
+        Open or update a pull request on any repository where AutoPR Reviewer is installed
+        and your first AI review will appear here automatically.
+    </p>
+</div>
+{% endif %}
 
 <div class="card">
     <h3 style="margin-bottom: 1rem;">Installation Details</h3>
@@ -182,7 +231,7 @@
 </div>
 
 <div class="actions">
-    <a href="{{ manage_url }}" class="btn btn-secondary" target="_blank" rel="noopener">Manage Installation on GitHub</a>
+    <a href="{{ manage_url }}" class="btn btn-secondary" target="_blank" rel="noopener">Manage on GitHub</a>
     {% if upgrade_url %}
     <a href="{{ upgrade_url }}" class="btn btn-pro">Upgrade to Pro 💎</a>
     {% endif %}
@@ -212,8 +261,7 @@
         <label for="contactMessage">Message</label>
         <textarea id="contactMessage" placeholder="What's on your mind?"></textarea>
 
-        <button class="btn btn-primary" onclick="sendContact()">Send Message</button>
-        <p id="contactSuccess">✓ Opening your email client…</p>
+        <button id="sendBtn" class="btn btn-primary" onclick="sendContact()">Send Message</button>
     </div>
 </div>
 
@@ -251,8 +299,8 @@
             return;
         }
 
-        const owner   = {{ installation.owner | tojson }};
-        const instId  = {{ installation.github_installation_id }};
+        const owner  = {{ installation.owner | tojson }};
+        const instId = {{ installation.github_installation_id }};
 
         const subject = encodeURIComponent(
             `[AutoPR Reviewer] ${type} from ${owner}`
@@ -267,7 +315,10 @@
         // Replace with your actual email address
         window.location.href = `mailto:your@email.com?subject=${subject}&body=${body}`;
 
-        document.getElementById('contactSuccess').style.display = 'block';
+        // Update button to confirm action
+        const btn = document.getElementById('sendBtn');
+        btn.textContent = '✓ Message ready to send';
+        btn.classList.add('sent');
 
         // Clear the form
         document.getElementById('contactEmail').value = '';
@@ -276,7 +327,9 @@
 
     // ── Flash popup ───────────────────────────────────────────────────────────
     function closeFlash() {
-        document.getElementById('flashModal').classList.remove('open');
+        const modal = document.getElementById('flashModal');
+        if (modal) modal.classList.remove('open');
+        // Strip flash param from URL so a refresh never re-shows the popup
         const url = new URL(window.location.href);
         url.searchParams.delete('flash');
         window.history.replaceState({}, '', url.toString());

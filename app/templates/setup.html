@@ -10,7 +10,7 @@
     .plan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 2rem 0; }
     @media (max-width: 600px) { .plan-grid { grid-template-columns: 1fr; } }
 
-    .plan-option { text-align: center; padding: 2rem 1.5rem; }
+    .plan-option { text-align: center; padding: 2rem 1.5rem; position: relative; }
     .plan-option h2 { margin-bottom: 0.4rem; }
     .plan-option .price { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem; }
     .plan-option .price-sub { font-size: 0.85rem; color: #8b949e; margin-bottom: 1.25rem; }
@@ -18,6 +18,24 @@
     .plan-option ul li { padding: 0.3rem 0; font-size: 0.9rem; color: #8b949e; }
     .plan-option ul li::before { content: "✓ "; color: #3fb950; }
     .plan-option .btn { width: 100%; text-align: center; }
+
+    /* Pro card highlight */
+    .plan-option-pro { border-color: #8957e5 !important; }
+    .plan-badge-recommended {
+        position: absolute;
+        top: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #8957e5;
+        color: #fff;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.2rem 0.75rem;
+        border-radius: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+    }
 {% endblock %}
 
 {% block content %}
@@ -40,7 +58,8 @@
         <a href="{{ dashboard_url }}" class="btn btn-secondary">Continue with Basic</a>
     </div>
 
-    <div class="card plan-option">
+    <div class="card plan-option plan-option-pro">
+        <span class="plan-badge-recommended">Recommended</span>
         <h2>Pro 💎</h2>
         <div class="price">$10<span style="font-size: 0.9rem; font-weight: 400;">/mo</span></div>
         <div class="price-sub">Cancel anytime</div>

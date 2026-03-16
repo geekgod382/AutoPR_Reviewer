@@ -24,10 +24,26 @@
     .plan-card ul li { padding: 0.3rem 0; font-size: 0.9rem; color: #8b949e; }
     .plan-card ul li::before { content: "✓ "; color: #3fb950; }
 
-    /* User avatar pill in nav */
-    .user-pill { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; }
-    .user-pill img { width: 24px; height: 24px; border-radius: 50%; }
-    .user-pill span { font-size: 0.9rem; color: #e6edf3; }
+    /* Pro plan card highlight */
+    .plan-card-pro {
+        border-color: #8957e5 !important;
+        position: relative;
+    }
+    .plan-badge-recommended {
+        position: absolute;
+        top: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #8957e5;
+        color: #fff;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.2rem 0.75rem;
+        border-radius: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+    }
 
     /* GitHub nav icon */
     .nav-github {
@@ -38,6 +54,11 @@
     }
     .nav-github:hover { color: #e6edf3; text-decoration: none; }
     .nav-github svg { width: 20px; height: 20px; fill: currentColor; }
+
+    /* User avatar pill in nav */
+    .user-pill { display: flex; align-items: center; gap: 0.5rem; }
+    .user-pill img { width: 24px; height: 24px; border-radius: 50%; }
+    .user-pill span { font-size: 0.9rem; color: #e6edf3; }
 
     /* Modal */
     .modal-backdrop {
@@ -85,9 +106,6 @@
     .install-row:last-child { border-bottom: none; }
     .install-name { font-weight: 600; margin-bottom: 0.2rem; }
     .install-meta { font-size: 0.8rem; color: #8b949e; }
-
-    .btn-danger { background: #da3633; color: #fff; border-color: #f85149; }
-    .btn-danger:hover { background: #f85149; text-decoration: none; }
 {% endblock %}
 
 {% block nav_extra %}
@@ -97,7 +115,7 @@
        target="_blank"
        rel="noopener"
        aria-label="View source on GitHub"
-       style="margin-left: 910px;">
+       style="margin-left: auto;">
         <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38
                      0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13
@@ -114,12 +132,12 @@
     </a>
 
     {% if user %}
-    <div class="user-pill" style="display:flex; align-items:center; gap:0.5rem;">
+    <div class="user-pill">
         <img src="{{ user.user_avatar }}" alt="{{ user.user_login }}" width="24" height="24"
              style="border-radius:50%; border:1px solid #30363d;">
-        <span style="font-size:0.9rem; color:#e6edf3;">{{ user.user_login }}</span>
+        <span>{{ user.user_login }}</span>
         <a href="/auth/logout" class="btn btn-danger"
-           style="padding:0.3rem 0.75rem; font-size:0.8rem; margin-left:0.5rem;">Logout</a>
+           style="padding:0.3rem 0.75rem; font-size:0.8rem; margin-left:0.25rem;">Logout</a>
     </div>
     {% elif oauth_enabled %}
     <a href="/auth/login" class="btn btn-secondary"
@@ -180,9 +198,10 @@
             <li>Risk scoring</li>
         </ul>
     </div>
-    <div class="card plan-card">
-        <h3>Pro</h3>
-        <div class="price">$10/mo</div>
+    <div class="card plan-card plan-card-pro" style="position:relative;">
+        <span class="plan-badge-recommended">Recommended</span>
+        <h3>Pro 💎</h3>
+        <div class="price">$10<span style="font-size:0.9rem; font-weight:400;">/mo</span></div>
         <ul>
             <li>Everything in Basic</li>
             <li>PR complexity scoring</li>
@@ -192,10 +211,6 @@
             <li>Missing error handling</li>
         </ul>
     </div>
-</div>
-
-<div>
-    <a href="https://stats.uptimerobot.com/f3AQQEDMx6" style="text-align: left; color: chartreuse; font-size: 1.5rem; font-weight: 600">AutoPR Status</a>
 </div>
 
 <script>
