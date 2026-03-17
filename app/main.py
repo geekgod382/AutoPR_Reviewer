@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi_sitemap import SiteMap
 from sqlalchemy import text
 
 from app.webhook import router as webhook_router
@@ -22,6 +23,14 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+sitemap = SiteMap(
+    app = app,
+    base_url="https://autopr-reviewer.onrender.com/",
+    exclude_patterns=["^/api/.*", "^/docs", "^/redoc"]
+)
+
+sitemap.attach()
 
 app.include_router(web_router)
 app.include_router(oauth_router)
