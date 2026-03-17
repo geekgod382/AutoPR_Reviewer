@@ -24,14 +24,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-sitemap = SiteMap(
-    app = app,
-    base_url="https://autopr-reviewer.onrender.com/",
-    exclude_patterns=["^/api/.*", "^/docs", "^/redoc"]
-)
-
-sitemap.attach()
-
 app.include_router(web_router)
 app.include_router(oauth_router)
 app.include_router(webhook_router)
@@ -52,3 +44,11 @@ def health():
         return {"status": "ok", "db": "ok"}
     except Exception as e:
         return {"status": "ok", "db": "error", "detail": str(e)}
+
+sitemap = SiteMap(
+    app = app,
+    base_url="https://autopr-reviewer.onrender.com/",
+    exclude_patterns=["^/api/.*", "^/docs", "^/redoc", "^/health"]
+)
+
+sitemap.attach()
