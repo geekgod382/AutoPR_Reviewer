@@ -456,7 +456,11 @@
                     <li>Bug &amp; style detection</li>
                     <li>Risk scoring per PR</li>
                 </ul>
+{% if user %}
+                <div class="btn btn-secondary plan-cta">Current plan</div>
+{% else %}
                 <a href="{{ install_url }}" class="btn btn-secondary plan-cta">Get started free</a>
+{% endif %}
             </div>
             <div class="plan-card plan-card-pro fu">
                 <span class="plan-rec">Recommended</span>
@@ -471,7 +475,11 @@
                     <li>Nested loop detection</li>
                     <li>Missing error handling checks</li>
                 </ul>
+{% if user %}
+                <a href="{{ install_url }}" class="btn btn-pro plan-cta">Upgrade to Pro</a>
+{% else %}
                 <a href="{{ install_url }}" class="btn btn-pro plan-cta">Start with Pro</a>
+{% endif %}
             </div>
         </div>
     </div>
