@@ -476,7 +476,7 @@
                     <li>Missing error handling checks</li>
                 </ul>
 {% if user %}
-                <a href="{{ install_url }}" class="btn btn-pro plan-cta">Upgrade to Pro</a>
+                <button class="btn btn-pro plan-cta" onclick="openModal()">Upgrade to Pro</button>
 {% else %}
                 <a href="{{ install_url }}" class="btn btn-pro plan-cta">Start with Pro</a>
 {% endif %}
