@@ -1,4 +1,4 @@
-fastapi==0.115.0
+fastapi==0.115.14
 uvicorn[standard]==0.30.6
 pydantic-settings==2.5.2
 PyJWT[crypto]==2.9.0
@@ -13,4 +13,5 @@ python-dotenv==1.0.1
 pytest==8.3.3
 asyncio==4.0.0
 itsdangerous==2.2.0
-starlette==0.38.6
+starlette==0.46.2
+fastapi_sitemap==1.0.4
