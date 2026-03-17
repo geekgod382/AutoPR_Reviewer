@@ -34,8 +34,10 @@
             display: flex;
             align-items: center;
             gap: 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 50;
         }
-        /* Logo is now a link */
         nav .logo {
             font-weight: 700;
             font-size: 1.1rem;
@@ -101,20 +103,17 @@
         footer a { color: #484f58; }
         footer a:hover { color: #8b949e; text-decoration: none; }
 
-        /* Status dot */
         .status-dot {
             display: inline-flex;
             align-items: center;
             gap: 0.4rem;
             font-size: 0.85rem;
             color: #484f58;
-            text-decoration: none;
         }
         .status-dot::before {
             content: '';
             display: inline-block;
-            width: 7px;
-            height: 7px;
+            width: 7px; height: 7px;
             border-radius: 50%;
             background: #3fb950;
             box-shadow: 0 0 4px #3fb950;
@@ -127,13 +126,18 @@
 <body>
     <nav>
         <a href="/" class="logo">🤖 AutoPR Reviewer</a>
-        <a href="/">Home</a>
+        {% block nav_home %}<a href="/">Home</a>{% endblock %}
         {% block nav_extra %}{% endblock %}
     </nav>
 
+    {# Pages that need full-width layout (landing) use body_extra and leave content empty #}
+    {% block body_content %}
     <div class="container">
         {% block content %}{% endblock %}
     </div>
+    {% endblock %}
+
+    {% block body_extra %}{% endblock %}
 
     <footer>
         <span>AutoPR Reviewer &mdash; AI-powered GitHub PR reviews</span>
