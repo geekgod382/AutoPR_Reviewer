@@ -39,88 +39,37 @@ async def landing(request: Request):
     settings = get_settings()
     install_url = f"https://github.com/apps/{settings.github_app_slug}/installations/new"
     session = get_session_data(request)
+
+    user_plan = "basic"
+    user_pro_installation_id = None
+
+    if session and session.get("user_login"):
+        db = get_session()
+        try:
+            installations = (
+                db.query(Installation)
+                .filter_by(owner=session["user_login"])
+                .all()
+            )
+            for inst in installations:
+                if inst.plan == "pro":
+                    user_plan = "pro"
+                    user_pro_installation_id = inst.github_installation_id
+                    break
+        finally:
+            db.close()
+
     return templates.TemplateResponse(
         "landing.html",
         {
             "request": request,
             "install_url": install_url,
             "user": session,
+            "user_plan": user_plan,
+            "user_pro_installation_id": user_pro_installation_id,
             "oauth_enabled": bool(settings.github_client_id),
         },
     )
-
-
-@router.get("/api/installations", response_class=JSONResponse)
-async def list_installations(request: Request):
-    settings = get_settings()
-
-    if not settings.github_client_id:
-        db = get_session()
-        try:
-            installations = db.query(Installation).all()
-            return [
-                {
-                    "installation_id": inst.github_installation_id,
-                    "owner": inst.owner,
-                    "plan": inst.plan,
-                    "created_at": inst.created_at.isoformat() if inst.created_at else None,
-                }
-                for inst in installations
-            ]
-        finally:
-            db.close()
-
-    session_data = get_session_data(request)
-    if not session_data:
-        raise HTTPException(status_code=401, detail="Not authenticated. Please log in with GitHub first.")
-
-    access_token = session_data["access_token"]
-    github_installation_ids: set[int] = set()
-    page = 1
-    async with httpx.AsyncClient() as client:
-        while True:
-            resp = await client.get(
-                GITHUB_USER_INSTALLATIONS_URL,
-                headers={
-                    "Authorization": f"Bearer {access_token}",
-                    "Accept": "application/vnd.github+json",
-                },
-                params={"per_page": 100, "page": page},
-            )
-            if resp.status_code == 401:
-                raise HTTPException(status_code=401, detail="GitHub token expired or revoked. Please log in again.")
-            resp.raise_for_status()
-            data = resp.json()
-            batch = data.get("installations", [])
-            if not batch:
-                break
-            for inst in batch:
-                github_installation_ids.add(inst["id"])
-            if len(batch) < 100:
-                break
-            page += 1
-
-    if not github_installation_ids:
-        return []
-
-    db = get_session()
-    try:
-        installations = (
-            db.query(Installation)
-            .filter(Installation.github_installation_id.in_(github_installation_ids))
-            .all()
-        )
-        return [
-            {
-                "installation_id": inst.github_installation_id,
-                "owner": inst.owner,
-                "plan": inst.plan,
-                "created_at": inst.created_at.isoformat() if inst.created_at else None,
-            }
-            for inst in installations
-        ]
-    finally:
-        db.close()
 
 
 @router.get("/setup", response_class=HTMLResponse)

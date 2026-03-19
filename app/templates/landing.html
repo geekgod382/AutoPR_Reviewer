@@ -457,7 +457,11 @@
                     <li>Risk scoring per PR</li>
                 </ul>
 {% if user %}
+    {% if user_plan == 'pro' %}
+                <a href="/cancel-subscription?installation_id={{ user_pro_installation_id }}" class="btn btn-secondary plan-cta">Switch to Basic</a>
+    {% else %}
                 <div class="btn btn-secondary plan-cta">Current plan</div>
+    {% endif %}
 {% else %}
                 <a href="{{ install_url }}" class="btn btn-secondary plan-cta">Get started free</a>
 {% endif %}
@@ -476,7 +480,11 @@
                     <li>Missing error handling checks</li>
                 </ul>
 {% if user %}
+    {% if user_plan == 'pro' %}
+                <div class="btn btn-secondary plan-cta">Current plan</div>
+    {% else %}
                 <button class="btn btn-pro plan-cta" onclick="openModal()">Upgrade to Pro</button>
+    {% endif %}
 {% else %}
                 <a href="{{ install_url }}" class="btn btn-pro plan-cta">Start with Pro</a>
 {% endif %}
