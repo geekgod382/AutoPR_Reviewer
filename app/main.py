@@ -43,7 +43,7 @@ def health():
         db.close()
         return {"status": "ok", "db": "ok"}
     except Exception as e:
-        return {"status": "ok", "db": "error", "detail": str(e)}
+        return {"status": "ok", "detail": str(e)}
 
 sitemap = SiteMap(
     app = app,
