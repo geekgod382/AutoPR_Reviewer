@@ -10,7 +10,7 @@ AI-powered GitHub App that automatically reviews Pull Requests — detects bugs,
 - Bug, style, and performance detection
 - Risk scoring (low / medium / high)
 
-**Pro plan ($10/mo via Dodo Payments):**
+**Pro plan ($5/mo via Dodo Payments):**
 - Everything in Basic, plus:
 - PR complexity score & estimated review time
 - Security pattern detection (hardcoded secrets, SQL injection, `eval`/`exec`)
