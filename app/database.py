@@ -11,11 +11,10 @@ def get_engine():
     settings = get_settings()
     db_url = settings.database_url
 
-    # check_same_thread is a SQLite-only argument — don't pass it for Postgres
-    connect_args = {"check_same_thread": False} if db_url.startswith("sqlite") else {"pool_pre_ping" : True}
-
-    return create_engine(db_url, connect_args=connect_args)
-
+    if db_url.startswith("sqlite"):
+        return create_engine(db_url, connect_args={"check_same_thread": False})
+    else:
+        return create_engine(db_url, pool_pre_ping=True)
 
 def get_session() -> Session:
     engine = get_engine()
