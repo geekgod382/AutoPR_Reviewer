@@ -122,8 +122,5 @@ pytest tests/ -v
 6. If the installation is on the Pro plan, premium analysis is also run (complexity, security patterns, etc.).
 7. A formatted Markdown review comment is posted on the PR.
 
-## License
-
-MIT License
-
+##
 [![Made with Supabase](https://supabase.com/badge-made-with-supabase-dark.svg)](https://supabase.com)
