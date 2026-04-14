@@ -1,126 +1,82 @@
 # AutoPR Reviewer 🤖
 
-AI-powered GitHub App that automatically reviews Pull Requests — detects bugs, highlights style issues, suggests performance improvements, and generates a risk score.
+> AI-powered code review on every pull request — automatically, the moment it's opened.
 
-## Features
+AutoPR Reviewer catches bugs, security issues, style violations, and performance problems before your team has to. No setup. No config. Just install and ship.
 
-**Free (Basic) plan:**
-- AI-powered code review (Google Gemini)
-- Static analysis (flake8)
-- Bug, style, and performance detection
-- Risk scoring (low / medium / high)
+---
 
-**Pro plan ($5/mo via Dodo Payments):**
-- Everything in Basic, plus:
-- PR complexity score & estimated review time
-- Security pattern detection (hardcoded secrets, SQL injection, `eval`/`exec`)
-- Large function detection (>50 lines)
-- Deeply nested loop detection (>3 levels)
-- Missing error handling detection
+## See It In Action
 
-## Quick Start
+<!-- Replace the paths below with your actual screenshots -->
+![AutoPR Review Example](https://github.com/user-attachments/assets/8bdf4440-41af-4bcf-916a-25e5d30807b5)
+![AutoPR Security & Static Analysis](https://github.com/user-attachments/assets/4bd6c7e5-1641-458d-9a15-e32500c59fbb)
 
-### 1. Configure Environment
+---
 
-Store these keys in .env file :
+## Install in One Click
 
-| Variable | Description |
-|---|---|
-| `GITHUB_APP_ID` | Your GitHub App's ID |
-| `GITHUB_PRIVATE_KEY_PATH` | Path to the `.pem` private key file |
-| `GITHUB_WEBHOOK_SECRET` | The webhook secret you set in the GitHub App |
-| `GITHUB_CLIENT_ID` | Get this ID form the Github page of your app |
-| `GITHUB_CLIENT_SECRET` | Get this secret form the Github page of your app |
-| `GEMINI_API_KEY` | Google Gemini API key ([get one here](https://aistudio.google.com/apikey)) |
-| `GROQ_API_KEY` | Groq API key ([get one here](https://console.groq.com/keys)) |
-| `DODO_PAYMENTS_API_KEY` | *(optional)* Dodo Payments API key for Pro subscriptions |
-| `DODO_WEBHOOK_SECRET` | *(optional)* Dodo webhook signature secret |
-| `DATABASE_URL` | Supabase Database URL |
+[![Install AutoPR Reviewer](https://img.shields.io/badge/Install%20on%20GitHub-AutoPR%20Reviewer-2ea44f?style=for-the-badge&logo=github)](https://github.com/apps/autopr-reviewer)
 
-For this project, I used Supabase
+No configuration required. Install the app on any repo and AutoPR starts reviewing your next PR automatically.
 
-### 2. Run Locally
+---
 
-```bash
-# Install dependencies
-pip install -r requirements.txt
+## What You Get
 
-# Start the server
-uvicorn app.main:app --reload --port 8000
-```
+Every pull request gets a structured review comment with:
 
-Use a tool like [ngrok](https://ngrok.com/) to expose your local server:
+- 📋 **PR Summary** — what changed and why it matters
+- 🔴 **Risk Score** — LOW / MEDIUM / HIGH based on file count, change volume, and sensitive files
+- 🐛 **Potential Bugs** — logic errors and edge cases flagged per file
+- 🔒 **Security Concerns** — authentication gaps, exposed endpoints, and unsafe patterns
+- ⚡ **Performance Suggestions** — inefficient patterns and caching opportunities
+- 🎨 **Style Issues** — formatting and readability problems
+- 🔍 **Static Analysis** — flake8 findings with exact line numbers
 
-```bash
-ngrok http 8000
-```
+---
 
-Then update your GitHub App's webhook URL to the ngrok URL + `/webhook`.
+## Plans
 
-### 3. Run with Docker
+| Feature | Free | Pro ($5/mo) |
+|---|---|---|
+| AI-powered code review | ✅ | ✅ |
+| Bug, style & performance detection | ✅ | ✅ |
+| Risk scoring | ✅ | ✅ |
+| Static analysis (flake8) | ✅ | ✅ |
+| PR complexity score & estimated review time | ❌ | ✅ |
+| Security pattern detection (hardcoded secrets, SQL injection, eval/exec) | ❌ | ✅ |
+| Large function detection (>50 lines) | ❌ | ✅ |
+| Deeply nested loop detection (>3 levels) | ❌ | ✅ |
+| Missing error handling detection | ❌ | ✅ |
 
-```bash
-# Build and start
-docker compose up --build -d
+Upgrade to Pro from your AutoPR dashboard.
 
-# View logs
-docker compose logs -f app
-```
-
-Make sure your `.env` file and `private-key.pem` are in the project root.
-
-## Project Structure
-
-```
-AutoPR-Reviewer/
-├── app/
-│   ├── main.py              # FastAPI entry point
-│   ├── config.py            # Settings (pydantic-settings)
-│   ├── auth.py              # GitHub App JWT auth
-│   ├── webhook.py           # Webhook endpoint + signature verification
-│   ├── github_client.py     # GitHub API calls (diff, files, comments)
-│   ├── reviewer.py          # Orchestrator — runs all analyzers
-│   ├── models.py            # Postgres models
-│   ├── database.py          # DB engine + session
-│   ├── payments.py          # Dodo Payments webhook + plan lookup
-│   └── analyzer/
-│       ├── ai.py            # Gemini and Groq based AI review
-│       ├── static.py        # flake8 static analysis
-│       ├── risk.py          # Risk score calculation
-│       └── premium.py       # Pro-only: security, complexity, etc.
-├── tests/
-│   ├── test_webhook.py
-│   ├── test_analyzer.py
-│   └── test_reviewer.py
-├── .env.example
-├── requirements.txt
-├── Dockerfile
-├── docker-compose.yml
-└── README.md
-```
-
-## Running Tests
-
-```bash
-pip install pytest
-pytest tests/ -v
-```
-
-## API Endpoints
-
-- `POST /webhook` — GitHub webhook receiver
-- `POST /payments/webhook` — Dodo Payments webhook receiver
-- `GET /health` — Health check
+---
 
 ## How It Works
 
-1. A PR is opened or updated on a repo with the GitHub App installed.
-2. GitHub sends a webhook event to `/webhook`.
-3. The app verifies the signature, fetches the PR diff and file list.
-4. It runs static analysis (flake8) and AI analysis (Gemini and Groq) in parallel.
-5. A risk score is calculated based on file count, change volume, sensitive files, and findings.
-6. If the installation is on the Pro plan, premium analysis is also run (complexity, security patterns, etc.).
-7. A formatted Markdown review comment is posted on the PR.
+1. You open or update a pull request
+2. AutoPR receives the event instantly
+3. Static analysis and AI review run in parallel
+4. A full review comment is posted on your PR — usually within seconds
 
-##
+---
+
+## FAQ
+
+**Does this work on private repos?**
+Yes. AutoPR works on both public and private repositories.
+
+**What languages does it support?**
+AutoPR works on any language for AI review. Static analysis (flake8) applies to Python files.
+
+**Is my code sent anywhere?**
+Only the PR diff is processed. Your full codebase is never cloned or stored.
+
+**How do I upgrade to Pro?**
+Log in with GitHub at [your dashboard URL] and go to the billing section.
+
+---
+
 [![Made with Supabase](https://supabase.com/badge-made-with-supabase-dark.svg)](https://supabase.com)
