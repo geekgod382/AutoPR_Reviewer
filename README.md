@@ -35,9 +35,9 @@ Store these keys in .env file :
 | `GROQ_API_KEY` | Groq API key ([get one here](https://console.groq.com/keys)) |
 | `DODO_PAYMENTS_API_KEY` | *(optional)* Dodo Payments API key for Pro subscriptions |
 | `DODO_WEBHOOK_SECRET` | *(optional)* Dodo webhook signature secret |
-| `DATABASE_URL` | Postgres Internal Database URL |
+| `DATABASE_URL` | Supabase Database URL |
 
-For this project, I used the Postgres database on Render
+For this project, I used Supabase
 
 ### 2. Run Locally
 
