@@ -81,7 +81,8 @@
 
     @media (max-width: 640px) {
         .nav-gh { display: none; }
-        .nav-links { display: none; position: absolute; top: 64px; left: 0; right: 0; flex-direction: column; gap: 0.5rem; background: rgba(22,27,34,0.98); padding: 0.75rem 1rem; border-top: 1px solid var(--border); }
+        .nav-outer-login { display: none; }
+        .nav-links { display: none; position: absolute; top: 56px; left: 0; right: 0; flex-direction: column; gap: 0.5rem; background: rgba(22,27,34,0.98); padding: 0.75rem 1rem; border-top: 1px solid var(--border); z-index: 100; }
         .nav-links.open { display: flex; }
         .nav-links .nav-login { display: block; }
         .nav-lnk { width: 100%; }
@@ -359,11 +360,6 @@
 {% endblock %}
 
 {% block nav_extra %}
-    <button class="hamburger" type="button" aria-label="Toggle navigation">
-        <span></span>
-        <span></span>
-        <span></span>
-    </button>
     <div class="nav-links">
         <a href="#features" class="nav-lnk">Features</a>
         <a href="#pricing"  class="nav-lnk">Pricing</a>
@@ -372,7 +368,7 @@
         {% endif %}
     </div>
 
-    <div style="display:flex; align-items:center; gap:0.75rem; margin-left:auto;">
+    <div class="nav-outer-login" style="display:flex; align-items:center; gap:0.75rem; margin-left:auto;">
         <a href="https://github.com/geekgod382/AutoPR_Reviewer"
            class="nav-gh" target="_blank" rel="noopener" aria-label="GitHub">
             <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
@@ -399,9 +395,15 @@
         </div>
         {% elif oauth_enabled %}
         <a href="/auth/login" class="btn btn-secondary"
-           style="padding:0.35rem 1rem; font-size:0.85rem;">Login with GitHub</a>
+           style="padding:0.35rem 1rem; font-size:0.85rem; white-space:nowrap;">Login with GitHub</a>
         {% endif %}
     </div>
+
+    <button class="hamburger" type="button" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
 {% endblock %}
 
 {# Override body_content so sections are full-width, not inside .container #}
