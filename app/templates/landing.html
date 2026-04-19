@@ -59,6 +59,8 @@
     .user-pill img { width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border); }
     .user-pill span { font-size: 0.875rem; color: var(--text); }
 
+    .nav-links .nav-login { display: none; }
+
     .hamburger {
         display: none;
         background: none;
@@ -78,8 +80,10 @@
     }
 
     @media (max-width: 640px) {
+        .nav-gh { display: none; }
         .nav-links { display: none; position: absolute; top: 64px; left: 0; right: 0; flex-direction: column; gap: 0.5rem; background: rgba(22,27,34,0.98); padding: 0.75rem 1rem; border-top: 1px solid var(--border); }
         .nav-links.open { display: flex; }
+        .nav-links .nav-login { display: block; }
         .nav-lnk { width: 100%; }
         .hamburger { display: block; }
     }
@@ -363,6 +367,9 @@
     <div class="nav-links">
         <a href="#features" class="nav-lnk">Features</a>
         <a href="#pricing"  class="nav-lnk">Pricing</a>
+        {% if not user and oauth_enabled %}
+        <a href="/auth/login" class="nav-lnk nav-login">Login with GitHub</a>
+        {% endif %}
     </div>
 
     <div style="display:flex; align-items:center; gap:0.75rem; margin-left:auto;">
