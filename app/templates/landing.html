@@ -59,6 +59,31 @@
     .user-pill img { width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border); }
     .user-pill span { font-size: 0.875rem; color: var(--text); }
 
+    .hamburger {
+        display: none;
+        background: none;
+        border: none;
+        color: var(--muted);
+        cursor: pointer;
+        padding: 0.4rem;
+        margin-left: auto;
+    }
+    .hamburger span {
+        display: block;
+        width: 22px;
+        height: 2px;
+        margin: 4px 0;
+        background: currentColor;
+        border-radius: 2px;
+    }
+
+    @media (max-width: 640px) {
+        .nav-links { display: none; position: absolute; top: 64px; left: 0; right: 0; flex-direction: column; gap: 0.5rem; background: rgba(22,27,34,0.98); padding: 0.75rem 1rem; border-top: 1px solid var(--border); }
+        .nav-links.open { display: flex; }
+        .nav-lnk { width: 100%; }
+        .hamburger { display: block; }
+    }
+
     /* ══ HERO ════════════════════════════════════════════════════ */
     #hero {
         position: relative;
@@ -330,6 +355,11 @@
 {% endblock %}
 
 {% block nav_extra %}
+    <button class="hamburger" type="button" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
     <div class="nav-links">
         <a href="#features" class="nav-lnk">Features</a>
         <a href="#pricing"  class="nav-lnk">Pricing</a>
@@ -513,7 +543,13 @@
         a.addEventListener('click', e => {
             const t = document.querySelector(a.getAttribute('href'));
             if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth' }); }
+            document.querySelector('.nav-links')?.classList.remove('open');
         });
+    });
+
+    const hamburger = document.querySelector('.hamburger');
+    hamburger?.addEventListener('click', () => {
+        document.querySelector('.nav-links')?.classList.toggle('open');
     });
 
     // ── active nav link on scroll ──────────────────────────────────
