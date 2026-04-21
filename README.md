@@ -75,7 +75,7 @@ AutoPR works on any language for AI review. Static analysis (flake8) applies to 
 Only the PR diff is processed. Your full codebase is never cloned or stored.
 
 **How do I upgrade to Pro?**
-Log in with GitHub at [your dashboard URL] and go to the billing section.
+You can upgrade to pro at your dashboard.
 
 ---
 
