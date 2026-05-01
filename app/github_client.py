@@ -100,7 +100,7 @@ async def post_review(
                 "path": c["path"],
                 "line": c["line"],
                 "body": c["body"],
-                "side": "RIGHT",   # RIGHT = new version of the file
+                "side": "RIGHT",  # RIGHT = new version of the file
             }
             for c in inline_comments
         ],
@@ -127,3 +127,17 @@ async def get_installation(installation_id: int) -> dict:
         )
         resp.raise_for_status()
         return resp.json()
+
+
+async def get_file_content(
+    installation_id: int, owner: str, repo: str, path: str, ref: str
+) -> str | None:
+    headers = await _headers(installation_id)
+    headers["Accept"] = "application/vnd.github.raw+json"
+    url = f"{GITHUB_API}/repos/{owner}/{repo}/contents/{path}"
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(url, headers=headers, params={"ref": ref})
+        if resp.status_code == 200:
+            return resp.text
+        return None

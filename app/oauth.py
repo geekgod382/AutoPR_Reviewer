@@ -26,6 +26,7 @@ SESSION_MAX_AGE = 60 * 60 * 8  # 8 hours
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
+
 def _serializer() -> URLSafeTimedSerializer:
     settings = get_settings()
     return URLSafeTimedSerializer(settings.session_secret_key, salt="autopr-session")
@@ -63,6 +64,7 @@ def _clear_session_cookie(response: RedirectResponse) -> None:
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
+
 @router.get("/login")
 async def oauth_login(request: Request, next: str = "/"):
     """
@@ -78,15 +80,19 @@ async def oauth_login(request: Request, next: str = "/"):
 
     state = secrets.token_urlsafe(16)
 
-    state_serializer = URLSafeTimedSerializer(settings.session_secret_key, salt="oauth-state")
+    state_serializer = URLSafeTimedSerializer(
+        settings.session_secret_key, salt="oauth-state"
+    )
     state_cookie_value = state_serializer.dumps({"state": state, "next": next})
 
-    params = urlencode({
-        "client_id": settings.github_client_id,
-        "redirect_uri": f"{settings.app_url}/auth/callback",
-        "scope": OAUTH_SCOPE,
-        "state": state,
-    })
+    params = urlencode(
+        {
+            "client_id": settings.github_client_id,
+            "redirect_uri": f"{settings.app_url}/auth/callback",
+            "scope": OAUTH_SCOPE,
+            "state": state,
+        }
+    )
     github_url = f"{GITHUB_AUTHORIZE_URL}?{params}"
 
     response = RedirectResponse(github_url, status_code=302)
@@ -106,8 +112,8 @@ async def oauth_callback(
     code: str = "",
     state: str = "",
     error: str = "",
-    installation_id: int = None,   # GitHub sends this when coming from a fresh install
-    setup_action: str = "",        # GitHub sends "install" or "update"
+    installation_id: int = None,  # GitHub sends this when coming from a fresh install
+    setup_action: str = "",  # GitHub sends "install" or "update"
 ):
     """
     GitHub redirects here after the user authorises the app.
@@ -139,14 +145,20 @@ async def oauth_callback(
     elif state:
         # Normal login flow — verify CSRF state and read `next` from cookie
         raw_state_cookie = request.cookies.get("oauth_state", "")
-        state_serializer = URLSafeTimedSerializer(settings.session_secret_key, salt="oauth-state")
+        state_serializer = URLSafeTimedSerializer(
+            settings.session_secret_key, salt="oauth-state"
+        )
         try:
             state_data = state_serializer.loads(raw_state_cookie, max_age=300)
         except (BadSignature, SignatureExpired):
-            raise HTTPException(status_code=400, detail="Invalid or expired OAuth state")
+            raise HTTPException(
+                status_code=400, detail="Invalid or expired OAuth state"
+            )
 
         if state_data.get("state") != state:
-            raise HTTPException(status_code=400, detail="State mismatch — possible CSRF attempt")
+            raise HTTPException(
+                status_code=400, detail="State mismatch — possible CSRF attempt"
+            )
 
         next_url = state_data.get("next", "/")
     else:
@@ -170,7 +182,9 @@ async def oauth_callback(
     access_token = token_data.get("access_token")
     if not access_token:
         logger.error("GitHub token exchange failed: %s", token_data)
-        raise HTTPException(status_code=502, detail="Failed to obtain access token from GitHub")
+        raise HTTPException(
+            status_code=502, detail="Failed to obtain access token from GitHub"
+        )
 
     granted_scopes = token_data.get("scope", "")
     logger.info("OAuth token granted scopes: %s", granted_scopes)
@@ -198,7 +212,9 @@ async def oauth_callback(
     response = RedirectResponse(next_url, status_code=302)
     response.delete_cookie("oauth_state")
     _set_session_cookie(response, session)
-    logger.info("OAuth login successful for user: %s → %s", session["user_login"], next_url)
+    logger.info(
+        "OAuth login successful for user: %s → %s", session["user_login"], next_url
+    )
     return response
 
 

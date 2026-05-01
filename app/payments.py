@@ -22,7 +22,7 @@ def verify_dodo_signature(payload: bytes, headers: dict, secret: str) -> bool:
     - Signature header format: "v1,<base64_signature>"
     """
     try:
-        webhook_id        = headers.get("webhook-id", "")
+        webhook_id = headers.get("webhook-id", "")
         webhook_timestamp = headers.get("webhook-timestamp", "")
         webhook_signature = headers.get("webhook-signature", "")
 
@@ -36,12 +36,14 @@ def verify_dodo_signature(payload: bytes, headers: dict, secret: str) -> bool:
         # Secret may be prefixed with "whsec_" — strip it, then base64-decode
         raw_secret = secret
         if raw_secret.startswith("whsec_"):
-            raw_secret = raw_secret[len("whsec_"):]
+            raw_secret = raw_secret[len("whsec_") :]
         secret_bytes = base64.b64decode(raw_secret)
 
         # Compute expected signature
         expected = base64.b64encode(
-            hmac.new(secret_bytes, signed_content.encode("utf-8"), hashlib.sha256).digest()
+            hmac.new(
+                secret_bytes, signed_content.encode("utf-8"), hashlib.sha256
+            ).digest()
         ).decode("utf-8")
 
         # Signature header can contain multiple sigs: "v1,sig1 v1,sig2"
@@ -63,7 +65,9 @@ async def dodo_webhook(request: Request):
     body = await request.body()
 
     if settings.dodo_webhook_secret:
-        if not verify_dodo_signature(body, dict(request.headers), settings.dodo_webhook_secret):
+        if not verify_dodo_signature(
+            body, dict(request.headers), settings.dodo_webhook_secret
+        ):
             logger.warning("Dodo webhook: invalid signature — rejecting")
             raise HTTPException(status_code=401, detail="Invalid signature")
 
@@ -71,7 +75,9 @@ async def dodo_webhook(request: Request):
     event_type = payload.get("type", "")
 
     # DEBUG: log full payload so we can verify field names in Render logs
-    logger.info("Dodo webhook received | event_type=%s | full payload=%s", event_type, payload)
+    logger.info(
+        "Dodo webhook received | event_type=%s | full payload=%s", event_type, payload
+    )
 
     data = payload.get("data", {})
 
@@ -105,7 +111,9 @@ async def _handle_subscription_active(data: dict):
         logger.info("parsed installation_id=%s", installation_id)
 
         if not installation_id:
-            logger.warning("No installation_id in metadata — plan will NOT be activated")
+            logger.warning(
+                "No installation_id in metadata — plan will NOT be activated"
+            )
             return
 
         installation = (
@@ -142,7 +150,11 @@ async def _handle_subscription_active(data: dict):
 
         installation.plan = "pro"
         db.commit()
-        logger.info("✅ Pro activated for installation_id=%s owner=%s", installation_id, installation.owner)
+        logger.info(
+            "✅ Pro activated for installation_id=%s owner=%s",
+            installation_id,
+            installation.owner,
+        )
 
     finally:
         db.close()
@@ -158,7 +170,10 @@ async def _handle_subscription_updated(data: dict):
             .first()
         )
         if not sub:
-            logger.warning("No subscription found for subscription_id=%s", data.get("subscription_id"))
+            logger.warning(
+                "No subscription found for subscription_id=%s",
+                data.get("subscription_id"),
+            )
             return
 
         sub.status = data.get("status", sub.status)
@@ -169,7 +184,11 @@ async def _handle_subscription_updated(data: dict):
             logger.info("Expiry updated to %s", expires_at)
 
         db.commit()
-        logger.info("Subscription updated | subscription_id=%s status=%s", data.get("subscription_id"), sub.status)
+        logger.info(
+            "Subscription updated | subscription_id=%s status=%s",
+            data.get("subscription_id"),
+            sub.status,
+        )
     finally:
         db.close()
 
@@ -184,22 +203,23 @@ async def _handle_subscription_cancelled(data: dict):
             .first()
         )
         if not sub:
-            logger.warning("No subscription found to cancel for subscription_id=%s", data.get("subscription_id"))
+            logger.warning(
+                "No subscription found to cancel for subscription_id=%s",
+                data.get("subscription_id"),
+            )
             return
 
         sub.status = "cancelled"
         sub.plan = "basic"
 
-        installation = (
-            db.query(Installation)
-            .filter_by(id=sub.installation_id)
-            .first()
-        )
+        installation = db.query(Installation).filter_by(id=sub.installation_id).first()
         if installation:
             installation.plan = "basic"
 
         db.commit()
-        logger.info("Subscription cancelled for subscription_id=%s", data.get("subscription_id"))
+        logger.info(
+            "Subscription cancelled for subscription_id=%s", data.get("subscription_id")
+        )
     finally:
         db.close()
 
@@ -225,7 +245,9 @@ async def _handle_payment_succeeded(data: dict):
             .first()
         )
         if not installation:
-            logger.warning("payment.succeeded: installation %s not in DB", installation_id)
+            logger.warning(
+                "payment.succeeded: installation %s not in DB", installation_id
+            )
             return
 
         if installation.plan == "pro":
@@ -250,7 +272,10 @@ async def _handle_payment_succeeded(data: dict):
             db.add(sub)
 
         db.commit()
-        logger.info("✅ Pro activated via payment.succeeded fallback for installation_id=%s", installation_id)
+        logger.info(
+            "✅ Pro activated via payment.succeeded fallback for installation_id=%s",
+            installation_id,
+        )
 
     finally:
         db.close()
@@ -262,7 +287,7 @@ def _parse_expiry(data: dict) -> datetime | None:
     Confirmed field name from Dodo docs/sample payload: next_billing_date
     """
     raw = (
-        data.get("next_billing_date")    # confirmed Dodo field
+        data.get("next_billing_date")  # confirmed Dodo field
         or data.get("current_period_end")
         or data.get("expires_at")
     )

@@ -89,7 +89,9 @@ class TestEventRouting:
         payload = json.dumps(payload_dict).encode()
         sig = _sign(payload, WEBHOOK_SECRET)
 
-        with patch("app.webhook.handle_pr_event", new_callable=AsyncMock) as mock_handle:
+        with patch(
+            "app.webhook.handle_pr_event", new_callable=AsyncMock
+        ) as mock_handle:
             resp = client.post(
                 "/webhook",
                 content=payload,

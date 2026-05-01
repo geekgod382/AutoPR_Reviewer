@@ -27,17 +27,21 @@ def _build_checkout_url(base_url: str, installation_id: int, success_url: str) -
     Dodo passes query params prefixed with `metadata_` into the subscription metadata.
     e.g. ?metadata_github_installation_id=123 → data.metadata.github_installation_id = "123"
     """
-    params = urlencode({
-        "metadata_github_installation_id": str(installation_id),
-        "redirect_url": success_url,
-    })
+    params = urlencode(
+        {
+            "metadata_github_installation_id": str(installation_id),
+            "redirect_url": success_url,
+        }
+    )
     return f"{base_url}&{params}"
 
 
 @router.get("/", response_class=HTMLResponse)
 async def landing(request: Request):
     settings = get_settings()
-    install_url = f"https://github.com/apps/{settings.github_app_slug}/installations/new"
+    install_url = (
+        f"https://github.com/apps/{settings.github_app_slug}/installations/new"
+    )
     session = get_session_data(request)
 
     user_plan = "basic"
@@ -47,9 +51,7 @@ async def landing(request: Request):
         db = get_session()
         try:
             installations = (
-                db.query(Installation)
-                .filter_by(owner=session["user_login"])
-                .all()
+                db.query(Installation).filter_by(owner=session["user_login"]).all()
             )
             for inst in installations:
                 if inst.plan == "pro":
@@ -85,7 +87,9 @@ async def list_installations(request: Request):
                     "installation_id": inst.github_installation_id,
                     "owner": inst.owner,
                     "plan": inst.plan,
-                    "created_at": inst.created_at.isoformat() if inst.created_at else None,
+                    "created_at": (
+                        inst.created_at.isoformat() if inst.created_at else None
+                    ),
                 }
                 for inst in installations
             ]
@@ -94,7 +98,10 @@ async def list_installations(request: Request):
 
     session_data = get_session_data(request)
     if not session_data:
-        raise HTTPException(status_code=401, detail="Not authenticated. Please log in with GitHub first.")
+        raise HTTPException(
+            status_code=401,
+            detail="Not authenticated. Please log in with GitHub first.",
+        )
 
     access_token = session_data["access_token"]
     github_installation_ids: set[int] = set()
@@ -110,7 +117,10 @@ async def list_installations(request: Request):
                 params={"per_page": 100, "page": page},
             )
             if resp.status_code == 401:
-                raise HTTPException(status_code=401, detail="GitHub token expired or revoked. Please log in again.")
+                raise HTTPException(
+                    status_code=401,
+                    detail="GitHub token expired or revoked. Please log in again.",
+                )
             resp.raise_for_status()
             data = resp.json()
             batch = data.get("installations", [])
@@ -143,7 +153,6 @@ async def list_installations(request: Request):
         ]
     finally:
         db.close()
-
 
 
 @router.get("/setup", response_class=HTMLResponse)
@@ -216,9 +225,7 @@ async def dashboard(request: Request, installation_id: int, flash: str = ""):
             raise HTTPException(status_code=404, detail="Installation not found")
 
         review_count = (
-            db.query(ReviewLog)
-            .filter_by(installation_id=installation.id)
-            .count()
+            db.query(ReviewLog).filter_by(installation_id=installation.id).count()
         )
 
         active_sub = (
@@ -276,9 +283,7 @@ async def cancel_subscription(installation_id: int):
     db = get_session()
 
     installation = (
-        db.query(Installation)
-        .filter_by(github_installation_id=installation_id)
-        .first()
+        db.query(Installation).filter_by(github_installation_id=installation_id).first()
     )
     if installation:
         installation.plan = "basic"

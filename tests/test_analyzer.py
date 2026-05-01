@@ -18,6 +18,7 @@ from app.analyzer.premium import (
 
 # ── Risk Score ──────────────────────────────────────────────────────
 
+
 class TestRiskScore:
     def test_low_risk(self):
         files = [{"filename": "readme.md", "changes": 5}]
@@ -51,6 +52,7 @@ class TestRiskScore:
 
 # ── Static Analysis Helpers ─────────────────────────────────────────
 
+
 class TestExtractAddedLines:
     def test_extracts_additions(self):
         patch_text = (
@@ -71,6 +73,7 @@ class TestExtractAddedLines:
 
 # ── Premium: Large Functions ────────────────────────────────────────
 
+
 class TestDetectLargeFunctions:
     def test_detects_large_function(self):
         lines = ["def big_function():"] + [f"+    line_{i}" for i in range(60)]
@@ -87,6 +90,7 @@ class TestDetectLargeFunctions:
 
 
 # ── Premium: Nested Loops ──────────────────────────────────────────
+
 
 class TestDetectNestedLoops:
     def test_detects_deeply_nested(self):
@@ -108,6 +112,7 @@ class TestDetectNestedLoops:
 
 # ── Premium: Missing Error Handling ─────────────────────────────────
 
+
 class TestDetectMissingErrorHandling:
     def test_detects_bare_except(self):
         diff = "+try:\n+    pass\n+except:\n+    pass\n"
@@ -122,6 +127,7 @@ class TestDetectMissingErrorHandling:
 
 # ── Premium: Complexity & Review Time ──────────────────────────────
 
+
 class TestComplexityScore:
     def test_low_complexity(self):
         files = [{"filename": "a.py", "additions": 5, "deletions": 2}]
@@ -130,7 +136,10 @@ class TestComplexityScore:
         assert result["level"] == "low"
 
     def test_high_complexity(self):
-        files = [{"filename": f"f{i}.py", "additions": 100, "deletions": 50} for i in range(15)]
+        files = [
+            {"filename": f"f{i}.py", "additions": 100, "deletions": 50}
+            for i in range(15)
+        ]
         diff = " ".join(["if else for while try except"] * 30)
         result = calculate_complexity_score(files, diff)
         assert result["level"] in ("high", "very high")
@@ -146,6 +155,7 @@ class TestEstimateReviewTime:
 
 # ── Premium: Security Patterns ─────────────────────────────────────
 
+
 class TestSecurityPatterns:
     def test_detects_hardcoded_secret(self):
         diff = "+api_key = 'sk_live_abc123456789'\n"
@@ -158,7 +168,7 @@ class TestSecurityPatterns:
         assert any(f["type"] == "dangerous_function" for f in findings)
 
     def test_detects_sql_injection(self):
-        diff = "+cursor.execute(f\"SELECT * FROM users WHERE id = {user_id}\")\n"
+        diff = '+cursor.execute(f"SELECT * FROM users WHERE id = {user_id}")\n'
         findings = detect_security_patterns(diff)
         assert any(f["type"] == "sql_injection" for f in findings)
 
@@ -169,6 +179,7 @@ class TestSecurityPatterns:
 
 
 # ── Premium: Full Pipeline ─────────────────────────────────────────
+
 
 class TestRunPremiumAnalysis:
     def test_returns_all_keys(self):

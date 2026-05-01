@@ -32,7 +32,7 @@ Every pull request gets a structured review comment with:
 - 🔒 **Security Concerns** — authentication gaps, exposed endpoints, and unsafe patterns
 - ⚡ **Performance Suggestions** — inefficient patterns and caching opportunities
 - 🎨 **Style Issues** — formatting and readability problems
-- 🔍 **Static Analysis** — flake8 findings with exact line numbers
+- 🔍 **Static Analysis** — using Ruff and ESLint 
 
 ---
 
@@ -43,11 +43,11 @@ Every pull request gets a structured review comment with:
 | AI-powered code review | ✅ | ✅ |
 | Bug, style & performance detection | ✅ | ✅ |
 | Risk scoring | ✅ | ✅ |
-| Static analysis (flake8) | ✅ | ✅ |
+| Static analysis (Ruff/ESLint) | ✅ | ✅ |
 | PR complexity score & estimated review time | ❌ | ✅ |
 | Security pattern detection (hardcoded secrets, SQL injection, eval/exec) | ❌ | ✅ |
-| Large function detection (>50 lines) | ❌ | ✅ |
-| Deeply nested loop detection (>3 levels) | ❌ | ✅ |
+| Detect bloated functions | ❌ | ✅ |
+| Deeply nested loop detection | ❌ | ✅ |
 | Missing error handling detection | ❌ | ✅ |
 
 Upgrade to Pro from your AutoPR dashboard.
@@ -69,7 +69,7 @@ Upgrade to Pro from your AutoPR dashboard.
 Yes. AutoPR works on both public and private repositories.
 
 **What languages does it support?**
-AutoPR works on any language for AI review. Static analysis (flake8) applies to Python files.
+AutoPR works on any language for AI review. Static analysis applies to Python and JS/TS files.
 
 **Is my code sent anywhere?**
 Only the PR diff is processed. Your full codebase is never cloned or stored.

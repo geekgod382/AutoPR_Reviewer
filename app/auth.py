@@ -10,6 +10,7 @@ def _get_private_key() -> str:
     settings = get_settings()
     return settings.github_private_key
 
+
 def generate_jwt() -> str:
     settings = get_settings()
     now = int(time.time())

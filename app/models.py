@@ -22,7 +22,7 @@ class Subscription(Base):
     dodo_payment_id = Column(String, unique=True, nullable=True)
     status = Column(String, default="inactive")  # "active", "inactive", "cancelled"
     plan = Column(String, default="basic")
-    expires_at = Column(DateTime, nullable=True)   # set from Dodo webhook data
+    expires_at = Column(DateTime, nullable=True)  # set from Dodo webhook data
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 

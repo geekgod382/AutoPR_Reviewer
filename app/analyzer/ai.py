@@ -111,7 +111,9 @@ async def _try_groq(prompt: str) -> dict | None:
 
 def compress_diff(diff: str, max_chars: int = 8000) -> str:
     lines = diff.splitlines()
-    important = [line for line in lines if line.startswith(("+", "-", "@@", "---", "+++"))]
+    important = [
+        line for line in lines if line.startswith(("+", "-", "@@", "---", "+++"))
+    ]
     compressed = "\n".join(important)
     if len(compressed) > max_chars:
         compressed = compressed[:max_chars] + "\n...[truncated]..."

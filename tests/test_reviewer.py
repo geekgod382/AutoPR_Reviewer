@@ -33,7 +33,9 @@ class TestFormatComment:
 
     def test_bugs_section(self):
         ai = self._base_ai_result(
-            bugs=[{"description": "Null pointer", "file": "main.py", "severity": "high"}]
+            bugs=[
+                {"description": "Null pointer", "file": "main.py", "severity": "high"}
+            ]
         )
         comment = _format_comment(ai, [], self._base_risk(), [])
         assert "### 🐛 Potential Bugs" in comment
@@ -72,16 +74,16 @@ class TestFormatComment:
 
     def test_security_section(self):
         ai = self._base_ai_result(
-            security=[{"description": "XSS risk", "file": "view.py", "severity": "high"}]
+            security=[
+                {"description": "XSS risk", "file": "view.py", "severity": "high"}
+            ]
         )
         comment = _format_comment(ai, [], self._base_risk(), [])
         assert "### 🛡️ Security Concerns" in comment
         assert "XSS risk" in comment
 
     def test_no_premium_by_default(self):
-        comment = _format_comment(
-            self._base_ai_result(), [], self._base_risk(), []
-        )
+        comment = _format_comment(self._base_ai_result(), [], self._base_risk(), [])
         assert "Pro Analysis" not in comment
 
     def test_premium_sections_included(self):
@@ -95,13 +97,25 @@ class TestFormatComment:
             },
             "estimated_review_time": "30-60 minutes",
             "security_patterns": [
-                {"type": "hardcoded_secret", "severity": "high", "message": "Secret found"}
+                {
+                    "type": "hardcoded_secret",
+                    "severity": "high",
+                    "message": "Secret found",
+                }
             ],
             "large_functions": [
-                {"function": "process", "lines": 80, "message": "Function `process` is 80 lines long (>50)."}
+                {
+                    "function": "process",
+                    "lines": 80,
+                    "message": "Function `process` is 80 lines long (>50).",
+                }
             ],
             "nested_loops": [
-                {"line": 42, "depth": 4, "message": "Deeply nested loop (depth: 4) at line 42."}
+                {
+                    "line": 42,
+                    "depth": 4,
+                    "message": "Deeply nested loop (depth: 4) at line 42.",
+                }
             ],
             "missing_error_handling": [
                 {"line": 10, "message": "Bare `except:` at line 10"}

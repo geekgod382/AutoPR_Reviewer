@@ -1,7 +1,19 @@
 SENSITIVE_PATTERNS = [
-    "migration", "auth", "security", "password", "secret",
-    "config", "env", ".lock", "docker", "ci", "deploy",
-    "payment", "billing", "token", "credential",
+    "migration",
+    "auth",
+    "security",
+    "password",
+    "secret",
+    "config",
+    "env",
+    ".lock",
+    "docker",
+    "ci",
+    "deploy",
+    "payment",
+    "billing",
+    "token",
+    "credential",
 ]
 
 

@@ -44,10 +44,11 @@ def health():
     except Exception as e:
         return {"status": "ok", "detail": str(e)}
 
+
 sitemap = SiteMap(
-    app = app,
+    app=app,
     base_url="https://autopr-reviewer.onrender.com/",
-    exclude_patterns=["^/api/.*", "^/docs", "^/redoc", "^/health"]
+    exclude_patterns=["^/api/.*", "^/docs", "^/redoc", "^/health"],
 )
 
 sitemap.attach()
