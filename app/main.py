@@ -47,7 +47,7 @@ def health():
 
 sitemap = SiteMap(
     app=app,
-    base_url="https://autopr-reviewer.onrender.com/",
+    base_url="https://prreviewr.com/",
     exclude_patterns=["^/api/.*", "^/docs", "^/redoc", "^/health"],
 )
 

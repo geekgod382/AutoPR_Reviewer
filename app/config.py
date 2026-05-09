@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     dodo_webhook_secret: str = ""
     dodo_checkout_url: str = ""
 
-    app_url: str = "https://autopr-reviewer.onrender.com"
+    app_url: str = "https://prreviewr.com"
     database_url: str = "sqlite:///./autopr.db"
 
     model_config = SettingsConfigDict(env_file=".env")
