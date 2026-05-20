@@ -320,6 +320,104 @@
     }
     .plan-cta { width: 100%; text-align: center; }
 
+    /* ══ HOW IT WORKS ═════════════════════════════════════════════ */
+    .how-steps {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 1.5rem;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    @media (max-width: 800px) { .how-steps { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 640px) { .how-steps { grid-template-columns: 1fr; } }
+
+    .how-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .how-step-num {
+        display: flex;
+        align-items: center; justify-content: center;
+        width: 50px; height: 50px;
+        border-radius: 50%;
+        background: rgba(88, 166, 255, 0.15);
+        border: 2px solid rgba(88, 166, 255, 0.3);
+        color: var(--accent);
+        font-size: 1.4rem; font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    .how-step h3 {
+        font-size: 1rem; font-weight: 600;
+        color: var(--text); margin-bottom: 0.5rem;
+    }
+    .how-step p {
+        font-size: 0.9rem; color: var(--muted); line-height: 1.6; font-weight: 300;
+    }
+
+    /* ══ FAQ ═══════════════════════════════════════════════════════ */
+    .faq-container {
+        max-width: 720px;
+        margin: 0 auto;
+    }
+    .faq-item {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .faq-item.open {
+        border-color: rgba(88, 166, 255, 0.4);
+        box-shadow: 0 4px 12px rgba(88, 166, 255, 0.08);
+    }
+    .faq-question {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1.25rem 1.5rem;
+        background: var(--surface);
+        cursor: pointer;
+        transition: background 0.2s;
+        border: none;
+        width: 100%;
+        text-align: left;
+        font-size: 1rem; font-weight: 600;
+        color: var(--text);
+    }
+    .faq-question:hover {
+        background: rgba(255, 255, 255, 0.03);
+    }
+    .faq-toggle {
+        display: flex;
+        align-items: center; justify-content: center;
+        width: 24px; height: 24px; min-width: 24px;
+        color: var(--accent);
+        font-size: 1.3rem;
+        transition: transform 0.3s ease;
+    }
+    .faq-item.open .faq-toggle {
+        transform: rotate(180deg);
+    }
+    .faq-answer {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease, padding 0.3s ease;
+    }
+    .faq-item.open .faq-answer {
+        max-height: 500px;
+    }
+    .faq-answer-content {
+        padding: 1rem 1.5rem;
+        color: var(--muted);
+        font-size: 0.95rem;
+        line-height: 1.7;
+        background: rgba(0, 0, 0, 0.2);
+        font-weight: 300;
+    }
+
     /* ══ FADE-UP ══════════════════════════════════════════════════ */
     .fu {
         opacity: 0;
@@ -362,7 +460,9 @@
 {% block nav_extra %}
     <div class="nav-links">
         <a href="#features" class="nav-lnk">Features</a>
+        <a href="#How-it-works"  class="nav-lnk">How it works</a>
         <a href="#pricing"  class="nav-lnk">Pricing</a>
+        <a href="#FAQs"  class="nav-lnk">FAQs</a>
         {% if not user and oauth_enabled %}
         <a href="/auth/login" class="nav-lnk nav-login">Login with GitHub</a>
         {% endif %}
@@ -477,6 +577,40 @@
 
 <div class="s-divider"></div>
 
+<!-- ══ HOW IT WORKS ════════════════════════════════════════════════ -->
+<section id="How-it-works" class="lp-section">
+    <div class="lp-wrap">
+        <div class="s-head fu" style="text-align:center; margin-left:auto; margin-right:auto; margin-bottom:3.5rem;">
+            <div class="s-label" style="color:#3fb950;">How it works</div>
+            <h2 class="s-title">Four steps to better code</h2>
+        </div>
+        <div class="how-steps">
+            <div class="how-step fu">
+                <div class="how-step-num">1</div>
+                <h3>You open or update a pull request</h3>
+                <p>Any change to your PR triggers a fresh analysis.</p>
+            </div>
+            <div class="how-step fu">
+                <div class="how-step-num">2</div>
+                <h3>AutoPR receives the event instantly</h3>
+                <p>GitHub webhooks deliver the event in real-time.</p>
+            </div>
+            <div class="how-step fu">
+                <div class="how-step-num">3</div>
+                <h3>Static analysis and AI review run in parallel</h3>
+                <p>Both engines process simultaneously for speed.</p>
+            </div>
+            <div class="how-step fu">
+                <div class="how-step-num">4</div>
+                <h3>A full review comment is posted</h3>
+                <p>Usually within seconds, directly on your PR.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="s-divider"></div>
+
 <!-- ══ PRICING ════════════════════════════════════════════════════ -->
 <section id="pricing" class="lp-section">
     <div class="lp-wrap">
@@ -530,6 +664,67 @@
 {% else %}
                 <a href="{{ install_url }}" class="btn btn-pro plan-cta">Start with Pro</a>
 {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="s-divider"></div>
+
+<!-- ══ FAQs ════════════════════════════════════════════════ -->
+<section id="FAQs" class="lp-section">
+    <div class="lp-wrap">
+        <div class="s-head fu" style="text-align:center; margin-left:auto; margin-right:auto; margin-bottom:3.5rem;">
+            <div class="s-label" style="color:#58a6ff;">FAQs</div>
+            <h2 class="s-title">Got questions?</h2>
+            <p class="s-sub" style="margin:0 auto;">
+                Everything you need to know about AutoPR Reviewer.
+            </p>
+        </div>
+        <div class="faq-container">
+            <div class="faq-item fu">
+                <button class="faq-question" onclick="toggleFaq(this)">
+                    <span>Does this work on private repos?</span>
+                    <span class="faq-toggle">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Yes. AutoPR works on both public and private repositories.
+                    </div>
+                </div>
+            </div>
+            <div class="faq-item fu">
+                <button class="faq-question" onclick="toggleFaq(this)">
+                    <span>What languages does it support?</span>
+                    <span class="faq-toggle">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        AutoPR works on any language for AI review. Static analysis applies to Python and JS/TS files.
+                    </div>
+                </div>
+            </div>
+            <div class="faq-item fu">
+                <button class="faq-question" onclick="toggleFaq(this)">
+                    <span>Is my code sent anywhere?</span>
+                    <span class="faq-toggle">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Only the PR diff is processed. Your full codebase is never cloned or stored.
+                    </div>
+                </div>
+            </div>
+            <div class="faq-item fu">
+                <button class="faq-question" onclick="toggleFaq(this)">
+                    <span>How do I upgrade to Pro?</span>
+                    <span class="faq-toggle">▼</span>
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        You can upgrade to pro at your dashboard.
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -594,6 +789,12 @@
     document.querySelectorAll('.fu').forEach(el => fuObs.observe(el));
     // hero is already visible
     document.querySelector('#hero .fu')?.classList.add('vis');
+
+    // ── FAQ expand/collapse ────────────────────────────────────────
+    function toggleFaq(btn) {
+        const item = btn.closest('.faq-item');
+        item.classList.toggle('open');
+    }
 
     // ── modal ──────────────────────────────────────────────────────
     async function openModal() {
